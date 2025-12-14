@@ -73,13 +73,6 @@ export function AuthProvider({ children }) {
   );
 }
 
-  return (
-    <AuthContext.Provider value={{ user, isAuthenticated, loading, login, register, logout }}>
-      {children}
-    </AuthContext.Provider>
-  );
-}
-
 export function useAuth() {
   const context = useContext(AuthContext);
   if (!context) {
