@@ -1,4 +1,5 @@
 import { createContext, useContext, useEffect, useState } from 'react';
+import authService from '../services/authService';
 
 const AuthContext = createContext();
 
@@ -26,36 +27,35 @@ export function AuthProvider({ children }) {
 
   const login = async (email, password) => {
     try {
-      // TODO: Gọi API login thật
-      // Giả lập login thành công
-      const fakeUser = { id: 1, email, name: email.split('@')[0] };
-      const fakeToken = 'fake-token-123';
+      const response = await authService.login(email, password);
+      const { token, user: userData } = response;
       
-      localStorage.setItem('authToken', fakeToken);
-      localStorage.setItem('user', JSON.stringify(fakeUser));
-      setUser(fakeUser);
+      localStorage.setItem('authToken', token);
+      localStorage.setItem('user', JSON.stringify(userData));
+      setUser(userData);
       setIsAuthenticated(true);
       
-      return { success: true };
+      return { success: true, data: response };
     } catch (error) {
-      return { success: false, error: 'Login failed' };
+      console.error('Login error:', error);
+      return { success: false, error: error.message || 'Lỗi đăng nhập' };
     }
   };
 
-  const register = async (userData) => {
+  const register = async (name, email, password) => {
     try {
-      // TODO: Gọi API register thật
-      const fakeUser = { id: 1, ...userData };
-      const fakeToken = 'fake-token-123';
+      const response = await authService.register(name, email, password);
+      const { token, user: userData } = response;
       
-      localStorage.setItem('authToken', fakeToken);
-      localStorage.setItem('user', JSON.stringify(fakeUser));
-      setUser(fakeUser);
+      localStorage.setItem('authToken', token);
+      localStorage.setItem('user', JSON.stringify(userData));
+      setUser(userData);
       setIsAuthenticated(true);
       
-      return { success: true };
+      return { success: true, data: response };
     } catch (error) {
-      return { success: false, error: 'Registration failed' };
+      console.error('Register error:', error);
+      return { success: false, error: error.message || 'Lỗi đăng ký' };
     }
   };
 
@@ -65,6 +65,13 @@ export function AuthProvider({ children }) {
     setUser(null);
     setIsAuthenticated(false);
   };
+
+  return (
+    <AuthContext.Provider value={{ user, isAuthenticated, loading, login, register, logout }}>
+      {children}
+    </AuthContext.Provider>
+  );
+}
 
   return (
     <AuthContext.Provider value={{ user, isAuthenticated, loading, login, register, logout }}>

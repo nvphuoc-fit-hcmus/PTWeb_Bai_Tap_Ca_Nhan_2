@@ -28,16 +28,18 @@ export default function RegisterPage() {
   const onSubmit = async (data) => {
     setLoading(true);
     setError('');
-    const res = await registerUser({
-      name: data.name,
-      email: data.email,
-      password: data.password,
-    });
-    setLoading(false);
-    if (res.success) {
-      navigate('/');
-    } else {
-      setError(res.error || 'Đăng ký thất bại');
+    try {
+      const res = await registerUser(data.name, data.email, data.password);
+      setLoading(false);
+      if (res.success) {
+        navigate('/');
+      } else {
+        setError(res.error || 'Đăng ký thất bại');
+      }
+    } catch (err) {
+      setLoading(false);
+      setError('Lỗi kết nối đến server');
+      console.error('Register error:', err);
     }
   };
 

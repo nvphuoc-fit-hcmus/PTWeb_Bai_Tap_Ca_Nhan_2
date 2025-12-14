@@ -23,12 +23,18 @@ export default function LoginPage() {
   const onSubmit = async (data) => {
     setLoading(true);
     setError('');
-    const res = await login(data.email, data.password);
-    setLoading(false);
-    if (res.success) {
-      navigate('/');
-    } else {
-      setError(res.error || 'Dang nhap that bai');
+    try {
+      const res = await login(data.email, data.password);
+      setLoading(false);
+      if (res.success) {
+        navigate('/');
+      } else {
+        setError(res.error || 'Đăng nhập thất bại');
+      }
+    } catch (err) {
+      setLoading(false);
+      setError('Lỗi kết nối đến server');
+      console.error('Login error:', err);
     }
   };
 

@@ -1,8 +1,8 @@
 import axios from 'axios';
 
-// TODO: Thay YOUR_TOKEN bằng token từ email
+// App token từ assignment
 export const API_BASE_URL = 'https://34.124.214.214:2423';
-export const APP_TOKEN = 'YOUR_TOKEN';
+export const APP_TOKEN = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VybmFtZSI6IjIzXzMxIiwicm9sZSI6InVzZXIiLCJhcGlfYWNjZXNzIjp0cnVlLCJpYXQiOjE3NjUzNjE3NjgsImV4cCI6MTc3MDU0NTc2OH0.O4I48nov3NLaKDSBhrPe9rKZtNs9q2Tkv4yK0uMthoo';
 
 const apiClient = axios.create({
   baseURL: API_BASE_URL,
