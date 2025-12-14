@@ -6,7 +6,7 @@ export default function Header({ isDarkMode, toggleTheme, user, onLogout }) {
 
   return (
     <header className="bg-pink-100 dark:bg-pink-900 py-4 px-6 shadow-md">
-      <div className="max-w-7xl mx-auto flex items-center justify-between">
+      <div className="max-w-[1200px] mx-auto flex items-center justify-between">
         {/* Góc trái - MSSV */}
         <div className="text-gray-700 dark:text-gray-200 font-semibold text-lg">
           {MSSV}

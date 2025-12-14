@@ -15,7 +15,7 @@ export default function Navigation() {
 
   return (
     <nav className="bg-blue-100 dark:bg-blue-900 py-3 px-6 shadow">
-      <div className="max-w-7xl mx-auto flex items-center justify-between">
+      <div className="max-w-[1200px] mx-auto flex items-center justify-between">
         {/* Góc trái - Icon Home */}
         <Link
           to="/"
