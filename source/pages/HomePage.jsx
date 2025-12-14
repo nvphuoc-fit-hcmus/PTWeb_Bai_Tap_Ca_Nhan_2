@@ -1,10 +1,61 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
+import movieService from '../services/movieService';
 
 export default function HomePage() {
   const [heroIndex, setHeroIndex] = useState(0);
   const [popularPage, setPopularPage] = useState(0);
   const [topRatedPage, setTopRatedPage] = useState(0);
+  const [allPopularMovies, setAllPopularMovies] = useState([]);
+  const [allTopRated, setAllTopRated] = useState([]);
+  const [loadingPopular, setLoadingPopular] = useState(false);
+  const [loadingTopRated, setLoadingTopRated] = useState(false);
+
+  // Load popular movies
+  useEffect(() => {
+    const loadPopular = async () => {
+      setLoadingPopular(true);
+      try {
+        const response = await movieService.getPopular(1);
+        const movies = response.data || response.results || [];
+        setAllPopularMovies(movies.slice(0, 20));
+      } catch (error) {
+        console.error('Loi tai phim popular:', error);
+        // Fallback to fake data
+        setAllPopularMovies([
+          { id: 4, title: 'Spider-Man', year: '2002', poster: 'https://upload.wikimedia.org/wikipedia/en/0/0c/Spiderman_movie_poster.jpg' },
+          { id: 5, title: 'Little Mermaid', year: '2023', poster: 'https://upload.wikimedia.org/wikipedia/en/6/63/The_Little_Mermaid_%282023_film%29_poster.jpg' },
+          { id: 6, title: 'Transformers', year: '2007', poster: 'https://upload.wikimedia.org/wikipedia/en/6/66/Transformers07.jpg' },
+        ]);
+      } finally {
+        setLoadingPopular(false);
+      }
+    };
+    loadPopular();
+  }, []);
+
+  // Load top rated movies
+  useEffect(() => {
+    const loadTopRated = async () => {
+      setLoadingTopRated(true);
+      try {
+        const response = await movieService.getTopRated(1);
+        const movies = response.data || response.results || [];
+        setAllTopRated(movies.slice(0, 20));
+      } catch (error) {
+        console.error('Loi tai phim top rated:', error);
+        // Fallback to fake data
+        setAllTopRated([
+          { id: 7, title: 'The Shawshank Redemption', year: '1994', rating: '9.3', poster: 'https://upload.wikimedia.org/wikipedia/en/8/81/ShawshankRedemptionMoviePoster.jpg' },
+          { id: 8, title: 'The Godfather', year: '1972', rating: '9.2', poster: 'https://upload.wikimedia.org/wikipedia/en/1/1c/Godfather_ver1.jpg' },
+          { id: 9, title: 'The Dark Knight', year: '2008', rating: '9.0', poster: 'https://upload.wikimedia.org/wikipedia/en/8/8a/Dark_Knight.jpg' },
+        ]);
+      } finally {
+        setLoadingTopRated(false);
+      }
+    };
+    loadTopRated();
+  }, []);
 
   // 5 phim doanh thu cao nhất (Hero)
   const topMovies = [
@@ -43,8 +94,8 @@ export default function HomePage() {
     },
   ];
 
-  // 20 phim phổ biến
-  const allPopularMovies = [
+  // Fallback 20 phim phổ biến (nếu API không trả về)
+  const defaultPopularMovies = [
     {
       id: 4,
       title: 'Spider-Man',
@@ -167,8 +218,8 @@ export default function HomePage() {
     },
   ];
 
-  // 20 phim top rating
-  const allTopRated = [
+  // Fallback 20 phim top rating (nếu API không trả về)
+  const defaultTopRated = [
     {
       id: 7,
       title: 'The Shawshank Redemption',
@@ -314,17 +365,19 @@ export default function HomePage() {
   const currentMovie = topMovies[heroIndex];
   const itemsPerPage = 3;
 
-  // Phân trang Most Popular
+  // Phân trang Most Popular (dùng data từ API hoặc fallback)
+  const popularMoviesData = allPopularMovies.length > 0 ? allPopularMovies : defaultPopularMovies;
   const popularStart = popularPage * itemsPerPage;
   const popularEnd = popularStart + itemsPerPage;
-  const currentPopularMovies = allPopularMovies.slice(popularStart, popularEnd);
-  const popularMaxPage = Math.ceil(allPopularMovies.length / itemsPerPage);
+  const currentPopularMovies = popularMoviesData.slice(popularStart, popularEnd);
+  const popularMaxPage = Math.ceil(popularMoviesData.length / itemsPerPage);
 
-  // Phân trang Top Rating
+  // Phân trang Top Rating (dùng data từ API hoặc fallback)
+  const topRatedData = allTopRated.length > 0 ? allTopRated : defaultTopRated;
   const topRatedStart = topRatedPage * itemsPerPage;
   const topRatedEnd = topRatedStart + itemsPerPage;
-  const currentTopRated = allTopRated.slice(topRatedStart, topRatedEnd);
-  const topRatedMaxPage = Math.ceil(allTopRated.length / itemsPerPage);
+  const currentTopRated = topRatedData.slice(topRatedStart, topRatedEnd);
+  const topRatedMaxPage = Math.ceil(topRatedData.length / itemsPerPage);
 
   return (
     <div className="space-y-14 bg-white text-gray-900">

@@ -1,29 +1,54 @@
 import { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
+import personService from '../services/personService';
 
 export default function PersonDetailPage() {
   const { id } = useParams();
   const [person, setPerson] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
 
   useEffect(() => {
-    // TODO: Ket noi API that, tam thoi fake data
-    setPerson({
-      id,
-      name: 'Buster Keaton',
-      photo: 'https://via.placeholder.com/300x400?text=Buster+Keaton',
-      biography: 'Buster Keaton was an American actor and filmmaker. He is often called "The Great Stone Face" because his comedy did not depend on changes of facial expression, but rather on his physical actions and on the extraordinary dynamics, mike, and perception.',
-      movies: [
-        { id: 1, title: 'Sherlock Jr.', year: 1924, role: 'Actor' },
-        { id: 2, title: 'The General', year: 1926, role: 'Actor' },
-        { id: 3, title: 'Steamboat Bill Jr.', year: 1928, role: 'Actor' },
-      ],
-    });
+    const loadPerson = async () => {
+      setLoading(true);
+      setError('');
+      try {
+        const response = await personService.getPersonDetail(id);
+        const personData = response.data || response;
+        setPerson(personData);
+      } catch (err) {
+        console.error('Load person error:', err);
+        setError('Lỗi tải thông tin người');
+        // Fallback fake data
+        setPerson({
+          id,
+          name: 'Buster Keaton',
+          photo: 'https://upload.wikimedia.org/wikipedia/commons/thumb/b/b6/Buster_Keaton_restored.jpg/440px-Buster_Keaton_restored.jpg',
+          biography: 'Buster Keaton was an American actor and filmmaker. He is often called "The Great Stone Face" because his comedy did not depend on changes of facial expression, but rather on his physical actions and on the extraordinary dynamics, mike, and perception.',
+          movies: [
+            { id: 1, title: 'Sherlock Jr.', year: 1924, role: 'Actor' },
+            { id: 2, title: 'The General', year: 1926, role: 'Actor' },
+            { id: 3, title: 'Steamboat Bill Jr.', year: 1928, role: 'Actor' },
+          ],
+        });
+      } finally {
+        setLoading(false);
+      }
+    };
+    loadPerson();
   }, [id]);
 
-  if (!person) {
-    return <div className="text-center py-12">Đang tải...</div>;
+  if (loading) {
+    return <div className="text-center py-12 text-gray-600 dark:text-gray-400">Đang tải...</div>;
   }
 
+  if (error) {
+    return <div className="text-center py-12 text-red-500">{error}</div>;
+  }
+
+  if (!person) {
+    return <div className="text-center py-12 text-gray-600 dark:text-gray-400">Không tìm thấy người</div>;
+  }
   return (
     <div>
       <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-8">

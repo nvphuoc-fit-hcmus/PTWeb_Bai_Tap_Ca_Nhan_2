@@ -2,44 +2,81 @@ import { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { Heart } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
+import movieService from '../services/movieService';
 
 export default function MovieDetailPage() {
   const { id } = useParams();
   const { isAuthenticated } = useAuth();
   const [movie, setMovie] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
   const [isFavourite, setIsFavourite] = useState(false);
 
   useEffect(() => {
-    // TODO: Ket noi API that, tam thoi fake data
-    setMovie({
-      id,
-      title: 'Sherlock Jr.',
-      year: 1924,
-      rated: 'Not Rated',
-      length: '45m',
-      director: 'Buster Keaton',
-      genres: ['Comedy', 'Drama'],
-      plot: 'A film projectionist longs to be a detective. When a crime is committed in his town, he tries to catch the culprit.',
-      cast: [
-        { id: 1, name: 'Buster Keaton', character: 'Sherlock Jr.' },
-        { id: 2, name: 'Kathryn McGuire', character: 'The Girl' },
-      ],
-      poster: 'https://via.placeholder.com/300x450?text=Sherlock+Jr',
-    });
+    const loadMovie = async () => {
+      setLoading(true);
+      setError('');
+      try {
+        const response = await movieService.getMovieDetail(id);
+        const movieData = response.data || response;
+        setMovie(movieData);
+      } catch (err) {
+        console.error('Load movie error:', err);
+        setError('Lỗi tải thông tin phim');
+        // Fallback fake data
+        setMovie({
+          id,
+          title: 'Sherlock Jr.',
+          year: 1924,
+          rated: 'Not Rated',
+          length: '45m',
+          director: 'Buster Keaton',
+          genres: ['Comedy', 'Drama'],
+          plot: 'A film projectionist longs to be a detective. When a crime is committed in his town, he tries to catch the culprit.',
+          cast: [
+            { id: 1, name: 'Buster Keaton', character: 'Sherlock Jr.' },
+            { id: 2, name: 'Kathryn McGuire', character: 'The Girl' },
+          ],
+          poster: 'https://upload.wikimedia.org/wikipedia/commons/thumb/7/74/Sherlock_Jr._poster.jpg/440px-Sherlock_Jr._poster.jpg',
+        });
+      } finally {
+        setLoading(false);
+      }
+    };
+    loadMovie();
   }, [id]);
 
-  if (!movie) {
-    return <div className="text-center py-12">Đang tải...</div>;
+  const handleFavourite = async () => {
+    try {
+      if (isFavourite) {
+        await movieService.removeFavourite(id);
+      } else {
+        await movieService.addFavourite(id);
+      }
+      setIsFavourite(!isFavourite);
+    } catch (err) {
+      console.error('Favourite error:', err);
+    }
+  };
   }
+  if (loading) {
+    return <div className="text-center py-12 text-gray-600 dark:text-gray-400">Đang tải...</div>;
 
   return (
+  if (error) {
+    return <div className="text-center py-12 text-red-500">{error}</div>;
+  }
+
+  if (!movie) {
+    return <div className="text-center py-12 text-gray-600 dark:text-gray-400">Không tìm thấy phim</div>;
+  }
     <div>
       <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-8">
         <div>
           <img src={movie.poster} alt={movie.title} className="w-full rounded-lg shadow-lg" />
           {isAuthenticated && (
             <button
-              onClick={() => setIsFavourite(!isFavourite)}
+              onClick={handleFavourite}
               className="w-full mt-4 px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 flex items-center justify-center gap-2"
             >
               <Heart className="w-5 h-5" fill={isFavourite ? 'currentColor' : 'none'} />
