@@ -1,3 +1,4 @@
+// ...existing code...
 import { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { Heart } from 'lucide-react';
@@ -18,8 +19,10 @@ export default function MovieDetailPage() {
       setError('');
       try {
         const response = await movieService.getMovieDetail(id);
-        const movieData = response.data || response;
+        const movieData = response?.data || response;
         setMovie(movieData);
+        // TODO: gọi API để kiểm tra đã favourite chưa (nếu có endpoint)
+        // setIsFavourite(!!movieData?.isFavourite);
       } catch (err) {
         console.error('Load movie error:', err);
         setError('Lỗi tải thông tin phim');
@@ -58,11 +61,11 @@ export default function MovieDetailPage() {
       console.error('Favourite error:', err);
     }
   };
-  }
+
   if (loading) {
     return <div className="text-center py-12 text-gray-600 dark:text-gray-400">Đang tải...</div>;
+  }
 
-  return (
   if (error) {
     return <div className="text-center py-12 text-red-500">{error}</div>;
   }
@@ -70,6 +73,8 @@ export default function MovieDetailPage() {
   if (!movie) {
     return <div className="text-center py-12 text-gray-600 dark:text-gray-400">Không tìm thấy phim</div>;
   }
+
+  return (
     <div>
       <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-8">
         <div>
@@ -91,7 +96,7 @@ export default function MovieDetailPage() {
             <p><strong>Rated:</strong> {movie.rated}</p>
             <p><strong>Thời lượng:</strong> {movie.length}</p>
             <p><strong>Đạo diễn:</strong> {movie.director}</p>
-            <p><strong>Thể loại:</strong> {movie.genres.join(', ')}</p>
+            <p><strong>Thể loại:</strong> {Array.isArray(movie.genres) ? movie.genres.join(', ') : movie.genres}</p>
           </div>
           <div className="mb-6">
             <h2 className="text-xl font-bold text-gray-800 dark:text-white mb-2">Tóm tắt</h2>
@@ -103,7 +108,7 @@ export default function MovieDetailPage() {
       <div className="mb-8">
         <h2 className="text-2xl font-bold text-gray-800 dark:text-white mb-4">Diễn viên</h2>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {movie.cast.map((actor) => (
+          {Array.isArray(movie.cast) && movie.cast.map((actor) => (
             <div key={actor.id} className="p-4 bg-gray-100 dark:bg-gray-800 rounded-lg">
               <Link to={`/person/${actor.id}`} className="text-blue-500 hover:underline font-semibold">
                 {actor.name}
