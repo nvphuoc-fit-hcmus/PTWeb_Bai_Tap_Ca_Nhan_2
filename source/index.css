@@ -1,6 +1,5 @@
 @import 'tailwindcss';
 
-/* Base styles */
 * {
   margin: 0;
   padding: 0;
@@ -10,10 +9,8 @@
 body {
   margin: 0;
   font-family: system-ui, -apple-system, sans-serif;
-  transition: background-color 0.3s ease;
 }
 
-/* Dark mode class */
 .dark {
   color-scheme: dark;
 }
