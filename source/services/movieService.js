@@ -13,16 +13,25 @@ export const movieService = {
     }
   },
 
-  // 2. Tìm kiếm phim
-  searchMovies: async (query, page = 1) => {
+  // 2. Tìm kiếm phim (hỗ trợ advanced search)
+  searchMovies: async (query, page = 1, filters = {}) => {
     try {
-      const response = await apiClient.get("/api/movies/search", {
-        params: {
-          q: query,
-          page,
-          limit: 20,
-        },
-      });
+      const params = {
+        page,
+        limit: 20,
+      };
+      
+      // Nếu có filters cụ thể (title, person, genre)
+      if (filters.title) params.title = filters.title;
+      if (filters.person) params.person = filters.person;
+      if (filters.genre) params.genre = filters.genre;
+      
+      // Nếu không có filter cụ thể, dùng omni search
+      if (!filters.title && !filters.person && !filters.genre && query) {
+        params.q = query;
+      }
+      
+      const response = await apiClient.get("/api/movies/search", { params });
       return response;
     } catch (error) {
       throw error || { message: "Lỗi tìm kiếm phim" };

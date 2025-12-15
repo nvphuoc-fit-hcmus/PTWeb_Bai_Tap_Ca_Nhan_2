@@ -11,6 +11,10 @@ export default function MovieDetailPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [isFavourite, setIsFavourite] = useState(false);
+  const [reviews, setReviews] = useState([]);
+  const [reviewsLoading, setReviewsLoading] = useState(false);
+  const [reviewSort, setReviewSort] = useState('newest');
+  const [expandedReviews, setExpandedReviews] = useState(new Set());
 
   // --- HÀM LẤY ẢNH (Chuẩn hóa) ---
   const getPosterUrl = (path) => {
@@ -89,6 +93,29 @@ export default function MovieDetailPage() {
     checkFavouriteStatus();
   }, [id, isAuthenticated]);
 
+  // Load reviews riêng
+  useEffect(() => {
+    const loadReviews = async () => {
+      if (!id) return;
+      
+      setReviewsLoading(true);
+      try {
+        const response = await movieService.getMovieReviews(id, 1, 10, reviewSort);
+        const reviewsData = Array.isArray(response) 
+          ? response 
+          : (response?.data || response?.results || response?.reviews || []);
+        setReviews(reviewsData);
+      } catch (err) {
+        console.error('Error loading reviews:', err);
+        setReviews([]);
+      } finally {
+        setReviewsLoading(false);
+      }
+    };
+    
+    loadReviews();
+  }, [id, reviewSort]);
+
   const handleFavourite = async () => {
     try {
       if (isFavourite) {
@@ -101,6 +128,35 @@ export default function MovieDetailPage() {
       console.error('Favourite error:', err);
       alert('Chức năng yêu thích cần đăng nhập hoặc API đang lỗi');
     }
+  };
+
+  const toggleReviewExpand = (reviewId) => {
+    setExpandedReviews((prev) => {
+      const newSet = new Set(prev);
+      if (newSet.has(reviewId)) {
+        newSet.delete(reviewId);
+      } else {
+        newSet.add(reviewId);
+      }
+      return newSet;
+    });
+  };
+
+  const renderStars = (rating) => {
+    const stars = [];
+    const maxStars = 5;
+    const normalizedRating = rating ? Math.min(Math.max(rating / 2, 0), maxStars) : 0;
+    
+    for (let i = 1; i <= maxStars; i++) {
+      if (i <= Math.floor(normalizedRating)) {
+        stars.push(<span key={i} className="text-yellow-400">★</span>);
+      } else if (i === Math.ceil(normalizedRating) && normalizedRating % 1 !== 0) {
+        stars.push(<span key={i} className="text-yellow-400">☆</span>);
+      } else {
+        stars.push(<span key={i} className="text-gray-300">☆</span>);
+      }
+    }
+    return stars;
   };
 
   if (loading) {
@@ -203,20 +259,143 @@ export default function MovieDetailPage() {
         )}
       </div>
 
-      {/* --- PHẦN REVIEWS (Nếu có) --- */}
-      {movie.reviews && movie.reviews.length > 0 && (
-          <div className="mb-8">
-            <h2 className="text-2xl font-bold mb-6 border-l-4 border-green-500 pl-3">Reviews</h2>
-            <div className="space-y-4">
-                {movie.reviews.map((review) => (
-                    <div key={review.id || Math.random()} className="border p-4 rounded-lg bg-gray-50">
-                        <h3 className="font-bold">{review.title} <span className="text-sm font-normal text-gray-500">- by {review.username}</span></h3>
-                        <p className="mt-2 text-gray-700">{review.content}</p>
-                    </div>
-                ))}
-            </div>
+      {/* --- PHẦN REVIEWS --- */}
+      <div className="mb-8">
+        <div className="flex items-center justify-between mb-6">
+          <h2 className="text-2xl font-bold border-l-4 border-green-500 pl-3">Đánh giá từ người xem</h2>
+          
+          {/* Sort Options */}
+          <div className="flex gap-2">
+            <button
+              onClick={() => setReviewSort('newest')}
+              className={`px-3 py-1 rounded text-sm font-medium transition-colors ${
+                reviewSort === 'newest'
+                  ? 'bg-green-600 text-white'
+                  : 'bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-gray-600'
+              }`}
+            >
+              Mới nhất
+            </button>
+            <button
+              onClick={() => setReviewSort('oldest')}
+              className={`px-3 py-1 rounded text-sm font-medium transition-colors ${
+                reviewSort === 'oldest'
+                  ? 'bg-green-600 text-white'
+                  : 'bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-gray-600'
+              }`}
+            >
+              Cũ nhất
+            </button>
+            <button
+              onClick={() => setReviewSort('highest')}
+              className={`px-3 py-1 rounded text-sm font-medium transition-colors ${
+                reviewSort === 'highest'
+                  ? 'bg-green-600 text-white'
+                  : 'bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-gray-600'
+              }`}
+            >
+              Đánh giá cao
+            </button>
           </div>
-      )}
+        </div>
+
+        {reviewsLoading ? (
+          <div className="text-center py-8 text-gray-500">
+            <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900 dark:border-gray-100"></div>
+            <p className="mt-2">Đang tải đánh giá...</p>
+          </div>
+        ) : reviews.length === 0 ? (
+          <div className="text-center py-12 bg-gray-50 dark:bg-gray-800 rounded-lg">
+            <svg className="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z" />
+            </svg>
+            <p className="mt-4 text-gray-500 dark:text-gray-400">Chưa có đánh giá nào cho phim này</p>
+          </div>
+        ) : (
+          <div className="space-y-4">
+            {reviews.map((review) => {
+              const reviewId = review.id || review._id || Math.random();
+              const isExpanded = expandedReviews.has(reviewId);
+              const content = review.content || review.review || review.text || '';
+              const shouldTruncate = content.length > 300;
+              const displayContent = shouldTruncate && !isExpanded
+                ? content.slice(0, 300) + '...'
+                : content;
+
+              return (
+                <div
+                  key={reviewId}
+                  className="border border-gray-200 dark:border-gray-700 p-5 rounded-lg bg-white dark:bg-gray-800 shadow-sm hover:shadow-md transition-shadow"
+                >
+                  {/* Review Header */}
+                  <div className="flex items-start justify-between mb-3">
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2 mb-1">
+                        <h3 className="font-bold text-lg text-gray-800 dark:text-white">
+                          {review.username || review.author || review.user || 'Anonymous'}
+                        </h3>
+                        {review.rating && (
+                          <div className="flex items-center gap-1">
+                            {renderStars(review.rating)}
+                            <span className="text-sm text-gray-600 dark:text-gray-400 ml-1">
+                              ({review.rating}/10)
+                            </span>
+                          </div>
+                        )}
+                      </div>
+                      {review.date && (
+                        <p className="text-sm text-gray-500 dark:text-gray-400">
+                          {new Date(review.date).toLocaleDateString('vi-VN', {
+                            year: 'numeric',
+                            month: 'long',
+                            day: 'numeric',
+                          })}
+                        </p>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Review Title */}
+                  {review.title && (
+                    <h4 className="font-semibold text-gray-900 dark:text-gray-100 mb-2">
+                      {review.title}
+                    </h4>
+                  )}
+
+                  {/* Review Content */}
+                  <p className="text-gray-700 dark:text-gray-300 leading-relaxed whitespace-pre-line">
+                    {displayContent}
+                  </p>
+
+                  {/* Expand/Collapse Button */}
+                  {shouldTruncate && (
+                    <button
+                      onClick={() => toggleReviewExpand(reviewId)}
+                      className="mt-3 text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 font-medium text-sm flex items-center gap-1"
+                    >
+                      {isExpanded ? (
+                        <>
+                          <span>Thu gọn</span>
+                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 15l7-7 7 7" />
+                          </svg>
+                        </>
+                      ) : (
+                        <>
+                          <span>Xem thêm</span>
+                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                          </svg>
+                        </>
+                      )}
+                    </button>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        )}
+      </div>
     </div>
   );
 }

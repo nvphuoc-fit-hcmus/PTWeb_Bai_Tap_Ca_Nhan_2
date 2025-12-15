@@ -7,6 +7,7 @@ export default function SearchPage() {
   const [results, setResults] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [searchType, setSearchType] = useState('all'); // all, title, person, genre
   const query = params.get('q') || ''; // Lấy keyword từ URL
 
   // --- HÀM LẤY ẢNH (Dùng chung logic với HomePage) ---
@@ -19,6 +20,31 @@ export default function SearchPage() {
     return 'https://via.placeholder.com/500x750?text=No+Image';
   };
 
+  // --- HÀM FORMAT THỜI LƯỢNG ---
+  const formatRuntime = (minutes) => {
+    if (!minutes) return 'N/A';
+    const hours = Math.floor(minutes / 60);
+    const mins = minutes % 60;
+    if (hours > 0) return `${hours}h ${mins}m`;
+    return `${mins}m`;
+  };
+
+  // --- HÀM LẤY RATED ---
+  const getRated = (movie) => {
+    return movie.rated || movie.rating || movie.certification || 'N/A';
+  };
+
+  // --- HÀM LẤY GENRE ---
+  const getGenres = (movie) => {
+    if (Array.isArray(movie.genres)) {
+      return movie.genres.slice(0, 2).join(', ');
+    }
+    if (typeof movie.genre === 'string') {
+      return movie.genre.split(',').slice(0, 2).join(', ');
+    }
+    return 'N/A';
+  };
+
   useEffect(() => {
     const search = async () => {
       if (!query) {
@@ -29,9 +55,13 @@ export default function SearchPage() {
       setLoading(true);
       setError('');
       try {
-        // movieService đã sửa ở bước trước để nhận tham số 'query' map vào 'q'
-        const response = await movieService.searchMovies(query, 1);
-        // API Search trả về { data: [...] }
+        // Build filters based on search type
+        const filters = {};
+        if (searchType === 'title') filters.title = query;
+        else if (searchType === 'person') filters.person = query;
+        else if (searchType === 'genre') filters.genre = query;
+        
+        const response = await movieService.searchMovies(query, 1, filters);
         setResults(response.data || []);
       } catch (err) {
         console.error('Search error:', err);
@@ -43,7 +73,7 @@ export default function SearchPage() {
     };
 
     search();
-  }, [query]);
+  }, [query, searchType]);
 
   return (
     <div className="container mx-auto px-4 py-8 min-h-screen max-w-[1200px]">
@@ -51,10 +81,56 @@ export default function SearchPage() {
         Kết quả tìm kiếm
       </h1>
 
+      {/* Filter Buttons */}
+      {query && (
+        <div className="mb-6 flex gap-2 flex-wrap">
+          <button
+            onClick={() => setSearchType('all')}
+            className={`px-4 py-2 rounded-lg font-medium transition-colors ${
+              searchType === 'all'
+                ? 'bg-blue-600 text-white'
+                : 'bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200 hover:bg-gray-300 dark:hover:bg-gray-600'
+            }`}
+          >
+            Tất cả
+          </button>
+          <button
+            onClick={() => setSearchType('title')}
+            className={`px-4 py-2 rounded-lg font-medium transition-colors ${
+              searchType === 'title'
+                ? 'bg-blue-600 text-white'
+                : 'bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200 hover:bg-gray-300 dark:hover:bg-gray-600'
+            }`}
+          >
+            Tên phim
+          </button>
+          <button
+            onClick={() => setSearchType('person')}
+            className={`px-4 py-2 rounded-lg font-medium transition-colors ${
+              searchType === 'person'
+                ? 'bg-blue-600 text-white'
+                : 'bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200 hover:bg-gray-300 dark:hover:bg-gray-600'
+            }`}
+          >
+            Diễn viên/Đạo diễn
+          </button>
+          <button
+            onClick={() => setSearchType('genre')}
+            className={`px-4 py-2 rounded-lg font-medium transition-colors ${
+              searchType === 'genre'
+                ? 'bg-blue-600 text-white'
+                : 'bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200 hover:bg-gray-300 dark:hover:bg-gray-600'
+            }`}
+          >
+            Thể loại
+          </button>
+        </div>
+      )}
+
       {/* Trạng thái chưa nhập */}
       {!query && (
         <div className="text-center py-20 text-gray-500">
-            <p className="text-xl">Nhập tên phim, diễn viên để bắt đầu tìm kiếm.</p>
+            <p className="text-xl">Nhập tên phim, diễn viên, đạo diễn hoặc thể loại để bắt đầu tìm kiếm.</p>
         </div>
       )}
 
@@ -105,16 +181,45 @@ export default function SearchPage() {
             </div>
             
             <div className="p-4 flex-grow flex flex-col">
-              <h3 className="font-bold text-lg text-gray-800 dark:text-white line-clamp-1 group-hover:text-blue-600 transition-colors">
+              <h3 className="font-bold text-lg text-gray-800 dark:text-white line-clamp-2 group-hover:text-blue-600 transition-colors mb-2">
                   {movie.title}
               </h3>
-              <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
-                  {movie.year || 'N/A'}
-              </p>
-              <div className="mt-auto pt-3">
-                  <span className="text-xs bg-gray-100 text-gray-600 px-2 py-1 rounded">
-                      Movie
-                  </span>
+              
+              {/* Thông tin chi tiết */}
+              <div className="space-y-2 text-sm text-gray-600 dark:text-gray-400">
+                {/* Năm */}
+                <div className="flex items-center gap-2">
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                  </svg>
+                  <span>{movie.year || 'N/A'}</span>
+                </div>
+
+                {/* Thời lượng */}
+                <div className="flex items-center gap-2">
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                  <span>{formatRuntime(movie.runtime || movie.length || movie.duration)}</span>
+                </div>
+
+                {/* Rated */}
+                <div className="flex items-center gap-2">
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                  <span className="font-semibold">{getRated(movie)}</span>
+                </div>
+
+                {/* Thể loại */}
+                {getGenres(movie) !== 'N/A' && (
+                  <div className="flex items-start gap-2">
+                    <svg className="w-4 h-4 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
+                    </svg>
+                    <span className="line-clamp-1">{getGenres(movie)}</span>
+                  </div>
+                )}
               </div>
             </div>
           </Link>
