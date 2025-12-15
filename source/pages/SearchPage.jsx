@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useSearchParams, Link } from 'react-router-dom';
 import movieService from '../services/movieService';
+import Pagination from '../components/Pagination';
 
 export default function SearchPage() {
   const [params] = useSearchParams();
@@ -8,6 +9,8 @@ export default function SearchPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [searchType, setSearchType] = useState('all'); // all, title, person, genre
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
   const query = params.get('q') || ''; // Lấy keyword từ URL
 
   // --- HÀM LẤY ẢNH (Dùng chung logic với HomePage) ---
@@ -45,10 +48,16 @@ export default function SearchPage() {
     return 'N/A';
   };
 
+  // Reset page khi query hoặc searchType thay đổi
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [query, searchType]);
+
   useEffect(() => {
     const search = async () => {
       if (!query) {
         setResults([]);
+        setTotalPages(1);
         return;
       }
       
@@ -61,19 +70,32 @@ export default function SearchPage() {
         else if (searchType === 'person') filters.person = query;
         else if (searchType === 'genre') filters.genre = query;
         
-        const response = await movieService.searchMovies(query, 1, filters);
-        setResults(response.data || []);
+        const response = await movieService.searchMovies(query, currentPage, filters);
+        const data = response.data || response.results || [];
+        setResults(data);
+        
+        // Sử dụng totalPages từ API hoặc tính từ total
+        let total = response.totalPages || response.total_pages;
+        if (!total && response.total) {
+          total = Math.ceil(response.total / 4);
+        }
+        // Fallback: nếu data đầy (4 items) thì giả sử có trang tiếp theo
+        if (!total && data.length === 4) {
+          total = currentPage + 1;
+        }
+        setTotalPages(total || 1);
       } catch (err) {
         console.error('Search error:', err);
         setError('Lỗi khi tìm kiếm phim. Vui lòng thử lại.');
         setResults([]);
+        setTotalPages(1);
       } finally {
         setLoading(false);
       }
     };
 
     search();
-  }, [query, searchType]);
+  }, [query, searchType, currentPage]);
 
   return (
     <div className="container mx-auto px-4 py-8 min-h-screen max-w-[1200px]">
@@ -157,8 +179,9 @@ export default function SearchPage() {
       )}
 
       {/* Hiển thị danh sách kết quả */}
-      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-        {results.map((movie) => (
+      <div>
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+          {results.map((movie) => (
           <Link
             to={`/movie/${movie.id}`}
             key={movie.id}
@@ -224,6 +247,16 @@ export default function SearchPage() {
             </div>
           </Link>
         ))}
+        </div>
+        
+        {/* Pagination */}
+        {!loading && results.length > 0 && (
+          <Pagination 
+            currentPage={currentPage}
+            totalPages={totalPages}
+            onPageChange={setCurrentPage}
+          />
+        )}
       </div>
     </div>
   );

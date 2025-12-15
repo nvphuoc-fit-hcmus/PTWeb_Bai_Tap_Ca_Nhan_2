@@ -1,12 +1,15 @@
 import { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import personService from '../services/personService';
+import Pagination from '../components/Pagination';
 
 export default function PersonDetailPage() {
   const { id } = useParams();
   const [person, setPerson] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 4;
 
   useEffect(() => {
     const loadPerson = async () => {
@@ -79,38 +82,56 @@ export default function PersonDetailPage() {
         </div>
       </div>
 
-      {person.known_for && person.known_for.length > 0 && (
-        <div>
-          <h2 className="text-2xl font-bold text-gray-800 dark:text-white mb-4">Danh sách phim nổi tiếng</h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {person.known_for.map((movie) => (
-              <Link
-                key={movie.id}
-                to={`/movie/${movie.id}`}
-                className="p-4 bg-gray-100 dark:bg-gray-800 rounded-lg hover:shadow-lg transition-shadow group"
-              >
-                {movie.image && (
-                  <img
-                    src={movie.image}
-                    alt={movie.title}
-                    className="w-full h-40 object-cover rounded mb-3 group-hover:scale-105 transition-transform"
-                    onError={(e) => {e.target.src = 'https://via.placeholder.com/300x200?text=No+Image'}}
-                  />
-                )}
-                <h3 className="font-semibold text-blue-600 dark:text-blue-400 hover:underline group-hover:text-blue-700">
-                  {movie.title}
-                </h3>
-                <p className="text-sm text-gray-600 dark:text-gray-400 mt-2">
-                  {movie.year} {movie.role && `• ${movie.role}`}
-                </p>
-                {movie.rate && (
-                  <p className="text-sm text-yellow-500 mt-1">★ {movie.rate}</p>
-                )}
-              </Link>
-            ))}
+      {person.known_for && person.known_for.length > 0 && (() => {
+        const totalPages = Math.ceil(person.known_for.length / itemsPerPage);
+        const startIndex = (currentPage - 1) * itemsPerPage;
+        const endIndex = startIndex + itemsPerPage;
+        const currentMovies = person.known_for.slice(startIndex, endIndex);
+        
+        return (
+          <div>
+            <h2 className="text-2xl font-bold text-gray-800 dark:text-white mb-4">
+              Danh sách phim nổi tiếng ({person.known_for.length} phim)
+            </h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {currentMovies.map((movie) => (
+                <Link
+                  key={movie.id}
+                  to={`/movie/${movie.id}`}
+                  className="p-4 bg-gray-100 dark:bg-gray-800 rounded-lg hover:shadow-lg transition-shadow group"
+                >
+                  {movie.image && (
+                    <img
+                      src={movie.image}
+                      alt={movie.title}
+                      className="w-full h-40 object-cover rounded mb-3 group-hover:scale-105 transition-transform"
+                      onError={(e) => {e.target.src = 'https://via.placeholder.com/300x200?text=No+Image'}}
+                    />
+                  )}
+                  <h3 className="font-semibold text-blue-600 dark:text-blue-400 hover:underline group-hover:text-blue-700">
+                    {movie.title}
+                  </h3>
+                  <p className="text-sm text-gray-600 dark:text-gray-400 mt-2">
+                    {movie.year} {movie.role && `• ${movie.role}`}
+                  </p>
+                  {movie.rate && (
+                    <p className="text-sm text-yellow-500 mt-1">★ {movie.rate}</p>
+                  )}
+                </Link>
+              ))}
+            </div>
+            
+            {/* Pagination */}
+            {totalPages > 1 && (
+              <Pagination 
+                currentPage={currentPage}
+                totalPages={totalPages}
+                onPageChange={setCurrentPage}
+              />
+            )}
           </div>
-        </div>
-      )}
+        );
+      })()}
     </div>
   );
 }

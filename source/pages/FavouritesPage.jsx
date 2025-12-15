@@ -1,11 +1,14 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import movieService from '../services/movieService';
+import Pagination from '../components/Pagination';
 
 export default function FavouritesPage() {
   const [favourites, setFavourites] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
 
   // --- HÀM LẤY ẢNH (đồng bộ với HomePage và robust hơn) ---
   const getPosterUrl = (movie) => {
@@ -38,7 +41,7 @@ export default function FavouritesPage() {
     const loadFavourites = async () => {
       setLoading(true);
       try {
-        const response = await movieService.getFavourites();
+        const response = await movieService.getFavourites(currentPage);
         // Chuẩn hóa mảng kết quả: có thể là { data: [...] } hoặc trực tiếp [] hoặc { items: [...] }
         const raw = Array.isArray(response)
           ? response
@@ -46,6 +49,17 @@ export default function FavouritesPage() {
         // Nhiều API favourites trả về { movie: {...}, createdAt, ... }
         const movies = raw.map((item) => (item?.movie ? item.movie : item));
         setFavourites(movies);
+        
+        // Sử dụng totalPages từ API
+        let total = response.totalPages || response.total_pages;
+        if (!total && response.total) {
+          total = Math.ceil(response.total / 4);
+        }
+        // Fallback: nếu data đầy (4 items) thì giả sử có trang tiếp theo
+        if (!total && movies.length === 4) {
+          total = currentPage + 1;
+        }
+        setTotalPages(total || 1);
       } catch (err) {
         console.error('Lỗi tải favorites:', err);
         setError('Không thể tải danh sách yêu thích.');
@@ -54,7 +68,7 @@ export default function FavouritesPage() {
       }
     };
     loadFavourites();
-  }, []);
+  }, [currentPage]);
 
   const handleRemove = async (movieId) => {
     // Optimistic UI update
@@ -88,8 +102,9 @@ export default function FavouritesPage() {
         </div>
       )}
 
-      <div className="flex flex-wrap gap-6">
-        {favourites.map((movie) => {
+      <div>
+        <div className="flex flex-wrap gap-6">
+          {favourites.map((movie) => {
           const id = getId(movie);
           return (
           <div key={id} className="group relative bg-white dark:bg-gray-800 rounded-lg shadow overflow-hidden flex flex-row w-full hover:shadow-xl transition-shadow">
@@ -127,6 +142,16 @@ export default function FavouritesPage() {
             </div>
           </div>
         );})}
+        </div>
+        
+        {/* Pagination */}
+        {!loading && favourites.length > 0 && (
+          <Pagination 
+            currentPage={currentPage}
+            totalPages={totalPages}
+            onPageChange={setCurrentPage}
+          />
+        )}
       </div>
     </div>
   );

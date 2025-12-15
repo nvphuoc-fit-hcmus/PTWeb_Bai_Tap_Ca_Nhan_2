@@ -3,6 +3,7 @@ import { useParams, Link } from 'react-router-dom';
 import { Heart } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import movieService from '../services/movieService';
+import Pagination from '../components/Pagination';
 
 export default function MovieDetailPage() {
   const { id } = useParams();
@@ -15,6 +16,8 @@ export default function MovieDetailPage() {
   const [reviewsLoading, setReviewsLoading] = useState(false);
   const [reviewSort, setReviewSort] = useState('newest');
   const [expandedReviews, setExpandedReviews] = useState(new Set());
+  const [reviewPage, setReviewPage] = useState(1);
+  const [reviewTotalPages, setReviewTotalPages] = useState(1);
 
   // --- HÀM LẤY ẢNH (Chuẩn hóa) ---
   const getPosterUrl = (path) => {
@@ -93,6 +96,11 @@ export default function MovieDetailPage() {
     checkFavouriteStatus();
   }, [id, isAuthenticated]);
 
+  // Reset review page khi sort thay đổi
+  useEffect(() => {
+    setReviewPage(1);
+  }, [reviewSort]);
+
   // Load reviews riêng
   useEffect(() => {
     const loadReviews = async () => {
@@ -100,21 +108,33 @@ export default function MovieDetailPage() {
       
       setReviewsLoading(true);
       try {
-        const response = await movieService.getMovieReviews(id, 1, 10, reviewSort);
+        const response = await movieService.getMovieReviews(id, reviewPage, 4, reviewSort);
         const reviewsData = Array.isArray(response) 
           ? response 
           : (response?.data || response?.results || response?.reviews || []);
         setReviews(reviewsData);
+        
+        // Sử dụng totalPages từ API
+        let total = response.totalPages || response.total_pages;
+        if (!total && response.total) {
+          total = Math.ceil(response.total / 4);
+        }
+        // Fallback: nếu data đầy (4 items) thì giả sử có trang tiếp theo
+        if (!total && reviewsData.length === 4) {
+          total = reviewPage + 1;
+        }
+        setReviewTotalPages(total || 1);
       } catch (err) {
         console.error('Error loading reviews:', err);
         setReviews([]);
+        setReviewTotalPages(1);
       } finally {
         setReviewsLoading(false);
       }
     };
     
     loadReviews();
-  }, [id, reviewSort]);
+  }, [id, reviewSort, reviewPage]);
 
   const handleFavourite = async () => {
     try {
@@ -394,6 +414,15 @@ export default function MovieDetailPage() {
               );
             })}
           </div>
+        )}
+        
+        {/* Pagination for Reviews */}
+        {!reviewsLoading && reviews.length > 0 && reviewTotalPages > 1 && (
+          <Pagination 
+            currentPage={reviewPage}
+            totalPages={reviewTotalPages}
+            onPageChange={setReviewPage}
+          />
         )}
       </div>
     </div>

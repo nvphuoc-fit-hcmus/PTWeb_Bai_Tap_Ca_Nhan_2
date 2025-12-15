@@ -18,7 +18,7 @@ export const movieService = {
     try {
       const params = {
         page,
-        limit: 20,
+        limit: 4,
       };
       
       // Nếu có filters cụ thể (title, person, genre)
@@ -83,7 +83,7 @@ export const movieService = {
   },
 
   // 7. Lấy danh sách review của phim
-  getMovieReviews: async (movieId, page = 1, limit = 10, sort = 'newest') => {
+  getMovieReviews: async (movieId, page = 1, limit = 4, sort = 'newest') => {
     try {
       const response = await apiClient.get(`/api/movies/${movieId}/reviews`, {
         params: { page, limit, sort },
@@ -142,7 +142,7 @@ export const movieService = {
   getFavourites: async (page = 1) => {
     try {
       const response = await apiClient.get("/api/users/favorites", {
-        params: { page, limit: 20 },
+        params: { page, limit: 4 },
       });
       return response;
     } catch (error) {
