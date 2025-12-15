@@ -1,12 +1,11 @@
-import { useState, useEffect } from 'react';
-import { ChevronLeft, ChevronRight } from 'lucide-react';
-import movieService from '../services/movieService';
-import { Link } from 'react-router-dom';
+import { useState, useEffect } from "react";
+import { ChevronLeft, ChevronRight } from "lucide-react";
+import movieService from "../services/movieService";
+import { Link } from "react-router-dom";
 
 export default function HomePage() {
   const [heroIndex, setHeroIndex] = useState(0);
   const [heroMovies, setHeroMovies] = useState([]);
-  
   const [popularPage, setPopularPage] = useState(0);
   const [topRatedPage, setTopRatedPage] = useState(0);
   const [allPopularMovies, setAllPopularMovies] = useState([]);
@@ -14,82 +13,95 @@ export default function HomePage() {
   const [loadingPopular, setLoadingPopular] = useState(false);
   const [loadingTopRated, setLoadingTopRated] = useState(false);
 
-  // --- HÀM HỖ TRỢ LẤY LINK ẢNH (ĐÃ CỐ ĐỊNH) ---
+  // --- HÀM HỖ TRỢ LẤY LINK ẢNH ---
   const getPosterUrl = (movie) => {
-    if (!movie) return 'https://via.placeholder.com/500x750?text=Loading';
-
-    let imageUrl = '';
-
-    // 1. Ưu tiên: API mới trả về trường 'image'
-    if (movie.image && typeof movie.image === 'string' && movie.image.trim() && movie.image !== 'string') {
+    if (!movie) return "https://via.placeholder.com/500x750?text=Loading";
+    let imageUrl = "";
+    if (movie.image && typeof movie.image === "string" && movie.image.trim() && movie.image !== "string") {
       imageUrl = movie.image;
-    } 
-    // 2. Dữ liệu fallback dùng 'poster'
-    else if (movie.poster && typeof movie.poster === 'string' && movie.poster.trim()) {
+    } else if (movie.poster && typeof movie.poster === "string" && movie.poster.trim()) {
       imageUrl = movie.poster;
-    }
-    // 3. API cũ dùng 'poster_path'
-    else if (movie.poster_path && typeof movie.poster_path === 'string' && movie.poster_path.trim()) {
+    } else if (movie.poster_path && typeof movie.poster_path === "string" && movie.poster_path.trim()) {
       imageUrl = movie.poster_path;
     }
 
-    // --- XỬ LÝ LINK ---
     if (imageUrl) {
-      if (imageUrl.startsWith('http')) return imageUrl;
-      const cleanPath = imageUrl.startsWith('/') ? imageUrl : `/${imageUrl}`;
+      if (imageUrl.startsWith("http")) return imageUrl;
+      const cleanPath = imageUrl.startsWith("/") ? imageUrl : `/${imageUrl}`;
       return `https://image.tmdb.org/t/p/w500${cleanPath}`;
     }
-
-    return 'https://via.placeholder.com/500x750?text=No+Image';
+    return "https://via.placeholder.com/500x750?text=No+Image";
   };
 
-  // --- 1. LOAD HERO MOVIES ---
+  // --- COMPONENT MOVIE CARD VỚI HIỆU ỨNG HOVER ---
+  const MovieCard = ({ movie }) => (
+    <Link
+      to={`/movie/${movie.id || movie._id}`}
+      className="group relative block h-full w-full"
+    >
+      {/* Container chính: Xử lý Scale và Z-index khi hover */}
+      <div className="relative aspect-[2/3] w-full overflow-hidden rounded-lg shadow-md transition-all duration-300 ease-in-out group-hover:scale-110 group-hover:z-50 group-hover:shadow-2xl bg-gray-200 dark:bg-gray-800">
+        
+        {/* Ảnh Poster */}
+        <img
+          src={getPosterUrl(movie)}
+          alt={movie.title}
+          className="h-full w-full object-cover transition-transform duration-300"
+          onError={(e) => { e.target.src = "https://via.placeholder.com/500x750?text=No+Image"; }}
+        />
+
+        {/* Lớp phủ đen mờ (Gradient Overlay) - Chỉ hiện khi hover */}
+        <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100"></div>
+
+        {/* Thông tin phim - Chỉ hiện khi hover */}
+        <div className="absolute bottom-0 left-0 w-full p-4 translate-y-4 opacity-0 transition-all duration-300 group-hover:translate-y-0 group-hover:opacity-100">
+          <h3 className="text-lg font-bold text-white line-clamp-2 drop-shadow-md">
+            {movie.title}
+          </h3>
+          <div className="mt-1 flex items-center justify-between text-sm font-medium text-gray-300">
+            <span>{movie.year || (movie.release_date ? new Date(movie.release_date).getFullYear() : 'N/A')}</span>
+            {(movie.rate || movie.vote_average) && (
+              <span className="flex items-center gap-1 text-yellow-400">
+                ★ {movie.rate || movie.vote_average}
+              </span>
+            )}
+          </div>
+        </div>
+      </div>
+    </Link>
+  );
+
+  // --- CÁC HÀM LOAD DATA (GIỮ NGUYÊN) ---
   useEffect(() => {
     const loadHero = async () => {
       try {
         const response = await movieService.getMovies(1, 5);
-        const movies = response.data || [];
-        setHeroMovies(movies);
-      } catch (error) {
-        console.error('Lỗi tải phim Hero:', error);
-        setHeroMovies([]); 
-      }
+        setHeroMovies(response.data || []);
+      } catch (error) { console.error("Lỗi tải phim Hero:", error); setHeroMovies([]); }
     };
     loadHero();
   }, []);
 
-  // --- 2. LOAD POPULAR ---
   useEffect(() => {
     const loadPopular = async () => {
       setLoadingPopular(true);
       try {
         const response = await movieService.getPopular(1);
-        const movies = response.data || response.results || [];
-        setAllPopularMovies(movies); 
-      } catch (error) {
-        console.error('Lỗi tải phim popular:', error);
-        setAllPopularMovies(defaultPopularMovies);
-      } finally {
-        setLoadingPopular(false);
-      }
+        setAllPopularMovies(response.data || response.results || []);
+      } catch (error) { console.error("Lỗi tải phim popular:", error); setAllPopularMovies(defaultPopularMovies); } 
+      finally { setLoadingPopular(false); }
     };
     loadPopular();
   }, []);
 
-  // --- 3. LOAD TOP RATED ---
   useEffect(() => {
     const loadTopRated = async () => {
       setLoadingTopRated(true);
       try {
         const response = await movieService.getTopRated(1);
-        const movies = response.data || response.results || [];
-        setAllTopRated(movies);
-      } catch (error) {
-        console.error('Lỗi tải phim top rated:', error);
-        setAllTopRated(defaultTopRated);
-      } finally {
-        setLoadingTopRated(false);
-      }
+        setAllTopRated(response.data || response.results || []);
+      } catch (error) { console.error("Lỗi tải phim top rated:", error); setAllTopRated(defaultTopRated); } 
+      finally { setLoadingTopRated(false); }
     };
     loadTopRated();
   }, []);
@@ -452,166 +464,95 @@ export default function HomePage() {
   const currentTopRated = topRatedData.slice(topRatedPage * itemsPerPage, (topRatedPage + 1) * itemsPerPage);
 
   return (
-    <div className="space-y-14 bg-white text-gray-900 pb-10">
+    <div className="space-y-14 bg-white text-gray-900 pb-10 dark:bg-gray-900 dark:text-white transition-colors duration-300">
       
-      {/* --- HERO SECTION (ĐÃ CỐ ĐỊNH KÍCH THƯỚC ẢNH) --- */}
-      <section className="relative bg-white min-h-[600px]"> {/* Tăng chiều cao section */}
+      {/* HERO SECTION */}
+      <section className="relative min-h-[500px]">
         {currentHeroMovie ? (
-          <div className="flex justify-center items-center relative py-10 bg-pink-50/50">
-            <button
-              onClick={() => setHeroIndex((heroIndex - 1 + heroMoviesData.length) % heroMoviesData.length)}
-              className="absolute left-4 md:left-20 z-10 p-3 bg-white/80 hover:bg-white rounded-full text-gray-700 shadow-lg transition-all"
-            >
-              <ChevronLeft className="w-6 h-6" />
-            </button>
-
-            {/* Container giới hạn chiều rộng */}
-            <div className="w-full max-w-xs md:max-w-sm transform hover:scale-105 transition-transform duration-300">
-              <Link to={`/movie/${currentHeroMovie.id || currentHeroMovie._id}`}>
-                  {/* QUAN TRỌNG: Div này ép tỉ lệ ảnh là 2:3 */}
-                  <div className="relative aspect-[2/3] w-full rounded-lg shadow-2xl overflow-hidden border-4 border-white bg-gray-200">
-                    <img
-                      src={getPosterUrl(currentHeroMovie)}
-                      alt={currentHeroMovie.title}
-                      // object-cover giúp ảnh lấp đầy khung mà không bị méo
-                      className="w-full h-full object-cover cursor-pointer"
-                      onError={(e) => {e.target.src = 'https://via.placeholder.com/500x750?text=Img_Error'}}
-                    />
-                  </div>
-              </Link>
-              <div className="mt-6 text-center">
-                <h3 className="text-3xl font-bold text-gray-900 font-serif line-clamp-1">{currentHeroMovie.title}</h3>
-                <p className="text-gray-500 mt-2 font-medium">
-                  {currentHeroMovie.year || (currentHeroMovie.release_date ? new Date(currentHeroMovie.release_date).getFullYear() : '')}
-                </p>
-              </div>
+          <div className="relative h-[500px] w-full overflow-hidden">
+            {/* Ảnh nền mờ (Backdrop) */}
+            <div className="absolute inset-0">
+                <img 
+                    src={getPosterUrl(currentHeroMovie)} 
+                    className="w-full h-full object-cover opacity-30 blur-sm scale-110"
+                    alt="backdrop"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-white dark:from-gray-900 to-transparent"></div>
             </div>
 
-            <button
-              onClick={() => setHeroIndex((heroIndex + 1) % heroMoviesData.length)}
-              className="absolute right-4 md:right-20 z-10 p-3 bg-white/80 hover:bg-white rounded-full text-gray-700 shadow-lg transition-all"
-            >
-              <ChevronRight className="w-6 h-6" />
-            </button>
+            <div className="relative container mx-auto px-4 h-full flex items-center justify-center gap-4">
+                <button onClick={() => setHeroIndex((heroIndex - 1 + heroMoviesData.length) % heroMoviesData.length)} className="z-10 p-3 bg-white/20 hover:bg-white/40 backdrop-blur-md rounded-full text-gray-800 dark:text-white transition-all">
+                    <ChevronLeft className="w-8 h-8" />
+                </button>
+
+                <div className="flex flex-col md:flex-row items-center gap-8 max-w-4xl z-10">
+                    <Link to={`/movie/${currentHeroMovie.id || currentHeroMovie._id}`} className="shrink-0 group">
+                        <div className="w-64 rounded-xl shadow-2xl overflow-hidden border-4 border-white dark:border-gray-700 transform group-hover:scale-105 transition-transform duration-300">
+                            <img src={getPosterUrl(currentHeroMovie)} alt={currentHeroMovie.title} className="w-full h-full object-cover" />
+                        </div>
+                    </Link>
+                    <div className="text-center md:text-left text-gray-900 dark:text-white">
+                        <h1 className="text-4xl md:text-5xl font-bold mb-4 font-serif drop-shadow-md">{currentHeroMovie.title}</h1>
+                        <p className="text-xl opacity-90 mb-2 font-medium">
+                            {currentHeroMovie.year || (currentHeroMovie.release_date ? new Date(currentHeroMovie.release_date).getFullYear() : '')}
+                        </p>
+                    </div>
+                </div>
+
+                <button onClick={() => setHeroIndex((heroIndex + 1) % heroMoviesData.length)} className="z-10 p-3 bg-white/20 hover:bg-white/40 backdrop-blur-md rounded-full text-gray-800 dark:text-white transition-all">
+                    <ChevronRight className="w-8 h-8" />
+                </button>
+            </div>
           </div>
         ) : (
-          // Loading Skeleton
-          <div className="flex justify-center items-center h-[600px] bg-gray-50">
-             <div className="animate-pulse flex flex-col items-center">
-                <div className="w-64 h-96 bg-gray-200 rounded-lg mb-4"></div>
-                <div className="h-6 w-48 bg-gray-200 rounded"></div>
-             </div>
-          </div>
+          <div className="h-[500px] flex items-center justify-center"><div className="animate-spin h-10 w-10 border-4 border-blue-500 rounded-full border-t-transparent"></div></div>
         )}
       </section>
 
-      {/* --- MOST POPULAR (ĐÃ CỐ ĐỊNH KÍCH THƯỚC) --- */}
-      <section className="relative container mx-auto px-4 md:px-12">
-        <div className="flex items-center justify-between mb-6 border-b pb-2">
-          <h2 className="text-2xl font-bold text-gray-900">Most Popular</h2>
-          {popularMaxPage > 0 && <span className="text-sm text-gray-500">Page {popularPage + 1} of {popularMaxPage}</span>}
+      {/* MOST POPULAR */}
+      <section className="container mx-auto px-4 md:px-12">
+        <div className="flex items-center justify-between mb-6">
+          <h2 className="text-2xl font-bold border-l-4 border-blue-500 pl-3">Most Popular</h2>
+          <div className="flex gap-2">
+            <button onClick={() => setPopularPage(Math.max(0, popularPage - 1))} disabled={popularPage === 0} className="p-2 bg-gray-100 dark:bg-gray-800 rounded-full hover:bg-gray-200 disabled:opacity-30 transition-colors">
+                <ChevronLeft className="w-5 h-5" />
+            </button>
+            <button onClick={() => setPopularPage(Math.min(popularMaxPage - 1, popularPage + 1))} disabled={popularPage >= popularMaxPage - 1} className="p-2 bg-gray-100 dark:bg-gray-800 rounded-full hover:bg-gray-200 disabled:opacity-30 transition-colors">
+                <ChevronRight className="w-5 h-5" />
+            </button>
+          </div>
         </div>
 
-        <div className="relative group">
-          <button
-            onClick={() => setPopularPage(Math.max(0, popularPage - 1))}
-            disabled={popularPage === 0}
-            className="absolute -left-4 top-1/2 -translate-y-1/2 p-2 bg-white border hover:bg-gray-100 disabled:opacity-0 rounded-full text-gray-700 shadow-lg z-10 transition-opacity"
-          >
-            <ChevronLeft className="w-5 h-5" />
-          </button>
-
-          <div className="grid grid-cols-3 gap-6">
-            {currentPopularMovies.map((movie) => (
-              <Link to={`/movie/${movie.id || movie._id}`} key={movie.id || movie._id} className="block group/card h-full">
-                <div className="bg-white rounded-lg overflow-hidden shadow-sm border border-gray-100 hover:shadow-xl transition-all duration-300 h-full flex flex-col">
-                  {/* Ép tỉ lệ 2:3 */}
-                  <div className="relative aspect-[2/3] w-full overflow-hidden bg-gray-200">
-                    <img
-                      src={getPosterUrl(movie)} 
-                      alt={movie.title}
-                      className="w-full h-full object-cover transform group-hover/card:scale-110 transition-transform duration-500"
-                      onError={(e) => {e.target.src = 'https://via.placeholder.com/500x750?text=No+Image'}}
-                    />
-                  </div>
-                  <div className="p-4 flex-grow">
-                    <h3 className="font-bold text-base text-gray-900 line-clamp-1 group-hover/card:text-blue-600 transition-colors">
-                        {movie.title}
-                    </h3>
-                    <p className="text-gray-500 text-sm mt-1">
-                        {movie.year || (movie.release_date ? new Date(movie.release_date).getFullYear() : 'N/A')}
-                    </p>
-                  </div>
-                </div>
-              </Link>
-            ))}
-          </div>
-
-          <button
-            onClick={() => setPopularPage(Math.min(popularMaxPage - 1, popularPage + 1))}
-            disabled={popularPage >= popularMaxPage - 1}
-            className="absolute -right-4 top-1/2 -translate-y-1/2 p-2 bg-white border hover:bg-gray-100 disabled:opacity-0 rounded-full text-gray-700 shadow-lg z-10 transition-opacity"
-          >
-            <ChevronRight className="w-5 h-5" />
-          </button>
+        {/* Grid phim với hiệu ứng hover */}
+        <div className="grid grid-cols-2 md:grid-cols-3 gap-6 py-4 px-2"> 
+          {currentPopularMovies.map((movie) => (
+            <div key={movie.id || movie._id} className="relative z-0 hover:z-10 transition-all duration-300">
+                <MovieCard movie={movie} />
+            </div>
+          ))}
         </div>
       </section>
 
-      {/* --- TOP RATING (ĐÃ CỐ ĐỊNH KÍCH THƯỚC) --- */}
-      <section className="relative container mx-auto px-4 md:px-12">
-        <div className="flex items-center justify-between mb-6 border-b pb-2">
-          <h2 className="text-2xl font-bold text-gray-900">Top Rating</h2>
-          {topRatedMaxPage > 0 && <span className="text-sm text-gray-500">Page {topRatedPage + 1} of {topRatedMaxPage}</span>}
+      {/* TOP RATING */}
+      <section className="container mx-auto px-4 md:px-12">
+        <div className="flex items-center justify-between mb-6">
+          <h2 className="text-2xl font-bold border-l-4 border-yellow-500 pl-3">Top Rating</h2>
+          <div className="flex gap-2">
+            <button onClick={() => setTopRatedPage(Math.max(0, topRatedPage - 1))} disabled={topRatedPage === 0} className="p-2 bg-gray-100 dark:bg-gray-800 rounded-full hover:bg-gray-200 disabled:opacity-30 transition-colors">
+                <ChevronLeft className="w-5 h-5" />
+            </button>
+            <button onClick={() => setTopRatedPage(Math.min(topRatedMaxPage - 1, topRatedPage + 1))} disabled={topRatedPage >= topRatedMaxPage - 1} className="p-2 bg-gray-100 dark:bg-gray-800 rounded-full hover:bg-gray-200 disabled:opacity-30 transition-colors">
+                <ChevronRight className="w-5 h-5" />
+            </button>
+          </div>
         </div>
 
-        <div className="relative group">
-          <button
-            onClick={() => setTopRatedPage(Math.max(0, topRatedPage - 1))}
-            disabled={topRatedPage === 0}
-            className="absolute -left-4 top-1/2 -translate-y-1/2 p-2 bg-white border hover:bg-gray-100 disabled:opacity-0 rounded-full text-gray-700 shadow-lg z-10 transition-opacity"
-          >
-            <ChevronLeft className="w-5 h-5" />
-          </button>
-
-          <div className="grid grid-cols-3 gap-6">
-            {currentTopRated.map((movie) => (
-              <Link to={`/movie/${movie.id || movie._id}`} key={movie.id || movie._id} className="block group/card h-full">
-                <div className="bg-white rounded-lg overflow-hidden shadow-sm border border-gray-100 hover:shadow-xl transition-all duration-300 h-full flex flex-col">
-                  {/* Ép tỉ lệ 2:3 */}
-                  <div className="relative aspect-[2/3] w-full overflow-hidden bg-gray-200">
-                    <img
-                      src={getPosterUrl(movie)} 
-                      alt={movie.title}
-                      className="w-full h-full object-cover transform group-hover/card:scale-110 transition-transform duration-500"
-                      onError={(e) => {e.target.src = 'https://via.placeholder.com/500x750?text=No+Image'}}
-                    />
-                    {(movie.rate || movie.vote_average) && (
-                         <div className="absolute top-2 right-2 bg-yellow-400 text-xs font-bold px-2 py-1 rounded shadow">
-                             ★ {(movie.rate || movie.vote_average).toString().substring(0, 3)}
-                         </div>
-                    )}
-                  </div>
-                  <div className="p-4 flex-grow">
-                    <h3 className="font-bold text-base text-gray-900 line-clamp-1 group-hover/card:text-blue-600 transition-colors">
-                        {movie.title}
-                    </h3>
-                    <p className="text-gray-500 text-sm mt-1">
-                      {movie.year || (movie.release_date ? new Date(movie.release_date).getFullYear() : 'N/A')}
-                      {(movie.rate || movie.vote_average) && <span className="ml-2">• {movie.rate || movie.vote_average}</span>}
-                    </p>
-                  </div>
-                </div>
-              </Link>
-            ))}
-          </div>
-
-          <button
-            onClick={() => setTopRatedPage(Math.min(topRatedMaxPage - 1, topRatedPage + 1))}
-            disabled={topRatedPage >= topRatedMaxPage - 1}
-            className="absolute -right-4 top-1/2 -translate-y-1/2 p-2 bg-white border hover:bg-gray-100 disabled:opacity-0 rounded-full text-gray-700 shadow-lg z-10 transition-opacity"
-          >
-            <ChevronRight className="w-5 h-5" />
-          </button>
+        <div className="grid grid-cols-2 md:grid-cols-3 gap-6 py-4 px-2">
+          {currentTopRated.map((movie) => (
+            <div key={movie.id || movie._id} className="relative z-0 hover:z-10 transition-all duration-300">
+                <MovieCard movie={movie} />
+            </div>
+          ))}
         </div>
       </section>
     </div>
