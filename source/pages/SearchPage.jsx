@@ -46,7 +46,7 @@ export default function SearchPage() {
   }, [query]);
 
   return (
-    <div className="container mx-auto px-4 py-8 min-h-screen">
+    <div className="container mx-auto px-4 py-8 min-h-screen max-w-[1200px]">
       <h1 className="text-3xl font-bold text-gray-800 dark:text-white mb-6 border-b pb-4">
         Kết quả tìm kiếm
       </h1>

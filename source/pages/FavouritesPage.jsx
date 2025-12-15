@@ -10,23 +10,63 @@ export default function FavouritesPage() {
   // --- HÀM LẤY ẢNH (Copy từ HomePage sang để đồng bộ) ---
   const getPosterUrl = (movie) => {
     if (!movie) return 'https://via.placeholder.com/500x750?text=No+Image';
-    // 1. Ưu tiên image từ API mới
-    if (movie.image && movie.image.startsWith('http')) return movie.image;
-    if (movie.image) return `https://image.tmdb.org/t/p/w500${movie.image}`;
-    // 2. Fallback
-    if (movie.poster) return movie.poster;
-    if (movie.poster_path) return `https://image.tmdb.org/t/p/w500${movie.poster_path}`;
+    let imageUrl = '';
+    if (
+      movie.image && typeof movie.image === 'string' && movie.image.trim() && movie.image !== 'string'
+    ) {
+      imageUrl = movie.image;
+    } else if (
+      movie.poster && typeof movie.poster === 'string' && movie.poster.trim()
+    ) {
+      imageUrl = movie.poster;
+    } else if (
+      movie.poster_path && typeof movie.poster_path === 'string' && movie.poster_path.trim()
+    ) {
+      imageUrl = movie.poster_path;
+    } else if (
+      movie.backdrop && typeof movie.backdrop === 'string' && movie.backdrop.trim()
+    ) {
+      imageUrl = movie.backdrop;
+    } else if (
+      movie.backdrop_path && typeof movie.backdrop_path === 'string' && movie.backdrop_path.trim()
+    ) {
+      imageUrl = movie.backdrop_path;
+    } else if (
+      movie.thumbnail && typeof movie.thumbnail === 'string' && movie.thumbnail.trim()
+    ) {
+      imageUrl = movie.thumbnail;
+    } else if (
+      movie.posterURL && typeof movie.posterURL === 'string' && movie.posterURL.trim()
+    ) {
+      imageUrl = movie.posterURL;
+    } else if (
+      movie.posterUrl && typeof movie.posterUrl === 'string' && movie.posterUrl.trim()
+    ) {
+      imageUrl = movie.posterUrl;
+    }
+
+    if (imageUrl) {
+      if (imageUrl.startsWith('http')) return imageUrl;
+      const cleanPath = imageUrl.startsWith('/') ? imageUrl : `/${imageUrl}`;
+      return `https://image.tmdb.org/t/p/w500${cleanPath}`;
+    }
     return 'https://via.placeholder.com/500x750?text=No+Image';
   };
+
+  // API trả về IMDB ID trong trường 'id'
+  const getId = (m) => m?.id;
 
   useEffect(() => {
     const loadFavourites = async () => {
       setLoading(true);
       try {
-        // API getFavourites trả về mảng trực tiếp (theo code service mới sửa)
         const response = await movieService.getFavourites();
-        // Kiểm tra xem response có phải mảng không, nếu không thì tìm trong .data
-        const movies = Array.isArray(response) ? response : (response.data || []);
+        // Chuẩn hóa mảng kết quả: có thể là { data: [...] } hoặc trực tiếp [] hoặc { items: [...] }
+        const raw = Array.isArray(response)
+          ? response
+          : (response?.data || response?.items || response?.results || []);
+        // Nhiều API favourites trả về { movie: {...}, createdAt, ... }
+        const movies = raw.map((item) => (item?.movie ? item.movie : item));
         setFavourites(movies);
       } catch (err) {
         console.error('Lỗi tải favorites:', err);
@@ -41,7 +81,7 @@ export default function FavouritesPage() {
   const handleRemove = async (movieId) => {
     // Optimistic UI update
     const prevList = [...favourites];
-    setFavourites(favourites.filter((m) => (m.id || m._id) !== movieId));
+    setFavourites(favourites.filter((m) => getId(m) !== movieId));
 
     try {
       await movieService.removeFavourite(movieId);
@@ -53,7 +93,7 @@ export default function FavouritesPage() {
   };
 
   return (
-    <div className="container mx-auto px-4 py-10 min-h-screen">
+    <div className="container mx-auto px-4 py-10 min-h-screen max-w-[1200px]">
       <h1 className="text-3xl font-bold mb-8 text-gray-800 dark:text-white flex items-center gap-3">
         <span className="text-red-500">♥</span> Danh sách yêu thích
         <span className="text-sm font-normal text-gray-500 mt-1 ml-2">({favourites.length} phim)</span>
@@ -70,10 +110,12 @@ export default function FavouritesPage() {
         </div>
       )}
 
-      <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-6">
-        {favourites.map((movie) => (
-          <div key={movie.id || movie._id} className="group relative bg-white dark:bg-gray-800 rounded-lg shadow overflow-hidden flex flex-col">
-            <Link to={`/movie/${movie.id || movie._id}`} className="relative aspect-[2/3] overflow-hidden">
+      <div className="flex flex-wrap gap-6">
+        {favourites.map((movie) => {
+          const id = getId(movie);
+          return (
+          <div key={id} className="group relative bg-white dark:bg-gray-800 rounded-lg shadow overflow-hidden flex flex-row w-full hover:shadow-xl transition-shadow">
+            <Link to={`/movie/${id}`} className="relative w-32 h-48 flex-shrink-0 overflow-hidden">
               <img 
                 src={getPosterUrl(movie)} 
                 alt={movie.title}
@@ -88,8 +130,8 @@ export default function FavouritesPage() {
               )}
             </Link>
             
-            <div className="p-3 flex flex-col flex-grow">
-              <Link to={`/movie/${movie.id || movie._id}`}>
+            <div className="p-4 flex flex-col flex-grow justify-between">
+              <Link to={`/movie/${id}`}>
                   <h3 className="font-bold text-gray-800 dark:text-white line-clamp-1 hover:text-blue-600 transition">
                       {movie.title}
                   </h3>
@@ -99,14 +141,14 @@ export default function FavouritesPage() {
               </p>
               
               <button
-                onClick={() => handleRemove(movie.id || movie._id)}
+                onClick={() => handleRemove(id)}
                 className="mt-auto w-full py-1.5 px-3 bg-red-100 text-red-600 text-xs font-bold rounded hover:bg-red-200 transition flex items-center justify-center gap-1"
               >
                 Xóa
               </button>
             </div>
           </div>
-        ))}
+        );})}
       </div>
     </div>
   );

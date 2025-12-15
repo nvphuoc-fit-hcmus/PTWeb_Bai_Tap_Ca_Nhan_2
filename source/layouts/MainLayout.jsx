@@ -18,7 +18,7 @@ export default function MainLayout() {
         onLogout={logout}
       />
       <Navigation />
-      <main className="flex-1 w-full mx-auto px-6 py-8">
+      <main className="flex-1 w-full mx-auto px-6 py-8 mt-0.5">
         <div className="max-w-[1200px] mx-auto">
           <Outlet />
         </div>

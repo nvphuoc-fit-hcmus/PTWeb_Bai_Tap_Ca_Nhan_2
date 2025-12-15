@@ -33,7 +33,7 @@ export default function ProfilePage() {
   if (!user) return <div className="text-center py-20">Vui lòng đăng nhập...</div>;
 
   return (
-    <div className="container mx-auto px-4 py-10 max-w-3xl">
+    <div className="container mx-auto px-4 py-10 max-w-[1200px]">
       <h1 className="text-3xl font-bold mb-8 text-gray-800 dark:text-white border-b pb-4">Hồ sơ cá nhân</h1>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-8">

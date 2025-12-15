@@ -1,13 +1,12 @@
 import { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { Heart } from 'lucide-react';
-// import { useAuth } from '../contexts/AuthContext'; // Bỏ comment nếu đã có Auth
+import { useAuth } from '../contexts/AuthContext';
 import movieService from '../services/movieService';
 
 export default function MovieDetailPage() {
   const { id } = useParams();
-  // const { isAuthenticated } = useAuth(); // Bỏ comment nếu đã có Auth
-  const isAuthenticated = true; // Tạm thời để true để test nút tim
+  const { isAuthenticated } = useAuth();
   const [movie, setMovie] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -25,18 +24,70 @@ export default function MovieDetailPage() {
       setLoading(true);
       setError('');
       try {
+        console.log(`[MovieDetail] Loading movie with ID: "${id}"`);
         const response = await movieService.getMovieDetail(id);
-        // API trả về trực tiếp object movie, không qua wrapper data
-        setMovie(response);
+        console.log(`[MovieDetail] Response received:`, response);
+        
+        // Xử lý các cấu trúc response khác nhau
+        let movieData = null;
+        if (response?.data) {
+          movieData = response.data;
+        } else if (response) {
+          movieData = response;
+        }
+        
+        console.log(`[MovieDetail] Processed movie data:`, movieData);
+        
+        if (movieData && (movieData.title || movieData.name)) {
+          setMovie(movieData);
+        } else {
+          console.error('[MovieDetail] Invalid movie data - missing title:', response);
+          setError('Không tìm thấy thông tin phim');
+        }
       } catch (err) {
-        console.error('Load movie error:', err);
-        setError('Lỗi tải thông tin phim');
+        console.error('[MovieDetail] Load error:', err);
+        // Hiển thị thông báo lỗi chi tiết hơn
+        const errorMessage = err?.message || err?.error || 'Lỗi tải thông tin phim. Vui lòng thử lại sau.';
+        setError(errorMessage);
       } finally {
         setLoading(false);
       }
     };
-    loadMovie();
+    
+    if (id) {
+      loadMovie();
+    }
   }, [id]);
+
+  // Kiểm tra xem movie có trong danh sách yêu thích không
+  useEffect(() => {
+    const checkFavouriteStatus = async () => {
+      if (!isAuthenticated || !id) return;
+      
+      try {
+        const response = await movieService.getFavourites();
+        const favourites = Array.isArray(response)
+          ? response
+          : (response?.data || response?.items || response?.results || []);
+        
+        // Xử lý trường hợp API trả về { movie: {...} }
+        const movies = favourites.map((item) => (item?.movie ? item.movie : item));
+        
+        // Kiểm tra xem movie có trong danh sách yêu thích không
+        const isFav = movies.some((fav) => {
+          const favId = fav?.id;
+          return favId && favId.toString() === id.toString();
+        });
+        
+        setIsFavourite(isFav);
+      } catch (err) {
+        console.error('Error checking favourite status:', err);
+        // Không hiển thị alert, chỉ log lỗi
+      }
+    };
+    
+    checkFavouriteStatus();
+  }, [id, isAuthenticated]);
 
   const handleFavourite = async () => {
     try {
@@ -65,7 +116,7 @@ export default function MovieDetailPage() {
   }
 
   return (
-    <div className="container mx-auto px-4 py-8">
+    <div className="container mx-auto px-4 py-8 max-w-[1200px]">
       {/* --- PHẦN INFO PHIM --- */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-12">
         {/* Poster */}

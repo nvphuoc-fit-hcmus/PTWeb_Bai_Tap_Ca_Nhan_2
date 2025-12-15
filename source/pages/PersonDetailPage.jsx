@@ -19,18 +19,6 @@ export default function PersonDetailPage() {
       } catch (err) {
         console.error('Load person error:', err);
         setError('Lỗi tải thông tin người');
-        // Fallback fake data
-        setPerson({
-          id,
-          name: 'Buster Keaton',
-          photo: 'https://upload.wikimedia.org/wikipedia/commons/thumb/b/b6/Buster_Keaton_restored.jpg/440px-Buster_Keaton_restored.jpg',
-          biography: 'Buster Keaton was an American actor and filmmaker. He is often called "The Great Stone Face" because his comedy did not depend on changes of facial expression, but rather on his physical actions and on the extraordinary dynamics, mike, and perception.',
-          movies: [
-            { id: 1, title: 'Sherlock Jr.', year: 1924, role: 'Actor' },
-            { id: 2, title: 'The General', year: 1926, role: 'Actor' },
-            { id: 3, title: 'Steamboat Bill Jr.', year: 1928, role: 'Actor' },
-          ],
-        });
       } finally {
         setLoading(false);
       }
@@ -50,35 +38,79 @@ export default function PersonDetailPage() {
     return <div className="text-center py-12 text-gray-600 dark:text-gray-400">Không tìm thấy người</div>;
   }
   return (
-    <div>
+    <div className="container mx-auto px-4 py-8 max-w-[1200px]">
       <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-8">
         <div>
-          <img src={person.photo} alt={person.name} className="w-full rounded-lg shadow-lg" />
+          <img 
+            src={person.image || 'https://via.placeholder.com/300x400?text=No+Image'} 
+            alt={person.name} 
+            className="w-full rounded-lg shadow-lg"
+            onError={(e) => {e.target.src = 'https://via.placeholder.com/300x400?text=No+Image'}}
+          />
         </div>
         <div className="md:col-span-2">
           <h1 className="text-4xl font-bold text-gray-800 dark:text-white mb-4">{person.name}</h1>
-          <div className="mb-6">
-            <h2 className="text-xl font-bold text-gray-800 dark:text-white mb-2">Tiểu sử</h2>
-            <p className="text-gray-700 dark:text-gray-300">{person.biography}</p>
-          </div>
+          {person.role && (
+            <p className="text-lg text-gray-600 dark:text-gray-400 mb-4">
+              <strong>Vai trò:</strong> {person.role}
+            </p>
+          )}
+          {person.birth_date && (
+            <p className="text-gray-600 dark:text-gray-400 mb-2">
+              <strong>Ngày sinh:</strong> {new Date(person.birth_date).toLocaleDateString('vi-VN')}
+            </p>
+          )}
+          {person.death_date && (
+            <p className="text-gray-600 dark:text-gray-400 mb-4">
+              <strong>Ngày mất:</strong> {new Date(person.death_date).toLocaleDateString('vi-VN')}
+            </p>
+          )}
+          {person.height && (
+            <p className="text-gray-600 dark:text-gray-400 mb-4">
+              <strong>Chiều cao:</strong> {person.height}
+            </p>
+          )}
+          {person.summary && (
+            <div className="mb-6">
+              <h2 className="text-xl font-bold text-gray-800 dark:text-white mb-2">Tiểu sử</h2>
+              <p className="text-gray-700 dark:text-gray-300">{person.summary}</p>
+            </div>
+          )}
         </div>
       </div>
 
-      <div>
-        <h2 className="text-2xl font-bold text-gray-800 dark:text-white mb-4">Danh sách phim tham gia</h2>
-        <div className="space-y-3">
-          {person.movies.map((movie) => (
-            <Link
-              key={movie.id}
-              to={`/movie/${movie.id}`}
-              className="block p-4 bg-gray-100 dark:bg-gray-800 rounded-lg hover:shadow-lg transition-shadow"
-            >
-              <h3 className="font-semibold text-blue-500 hover:underline">{movie.title}</h3>
-              <p className="text-sm text-gray-600 dark:text-gray-400">{movie.year} • {movie.role}</p>
-            </Link>
-          ))}
+      {person.known_for && person.known_for.length > 0 && (
+        <div>
+          <h2 className="text-2xl font-bold text-gray-800 dark:text-white mb-4">Danh sách phim nổi tiếng</h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {person.known_for.map((movie) => (
+              <Link
+                key={movie.id}
+                to={`/movie/${movie.id}`}
+                className="p-4 bg-gray-100 dark:bg-gray-800 rounded-lg hover:shadow-lg transition-shadow group"
+              >
+                {movie.image && (
+                  <img
+                    src={movie.image}
+                    alt={movie.title}
+                    className="w-full h-40 object-cover rounded mb-3 group-hover:scale-105 transition-transform"
+                    onError={(e) => {e.target.src = 'https://via.placeholder.com/300x200?text=No+Image'}}
+                  />
+                )}
+                <h3 className="font-semibold text-blue-600 dark:text-blue-400 hover:underline group-hover:text-blue-700">
+                  {movie.title}
+                </h3>
+                <p className="text-sm text-gray-600 dark:text-gray-400 mt-2">
+                  {movie.year} {movie.role && `• ${movie.role}`}
+                </p>
+                {movie.rate && (
+                  <p className="text-sm text-yellow-500 mt-1">★ {movie.rate}</p>
+                )}
+              </Link>
+            ))}
+          </div>
         </div>
-      </div>
+      )}
     </div>
   );
 }

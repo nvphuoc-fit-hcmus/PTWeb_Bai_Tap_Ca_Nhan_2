@@ -53,11 +53,7 @@ export const authService = {
   // Update Profile: PATCH /api/users/profile
   updateProfile: async (data) => {
     try {
-      // Lưu ý: Cần đảm bảo api.js có hàm request hoặc patch
-      const response = await apiClient.request('/api/users/profile', {
-          method: 'PATCH',
-          body: data
-      });
+      const response = await apiClient.patch('/api/users/profile', data);
       return response;
     } catch (error) {
       throw error || { message: 'Lỗi cập nhật profile' };

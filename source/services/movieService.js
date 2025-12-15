@@ -73,9 +73,43 @@ export const movieService = {
     }
   },
 
-  // --- PHẦN SỬA ĐỔI QUAN TRỌNG (FAVORITES) ---
+  // 7. Lấy danh sách review của phim
+  getMovieReviews: async (movieId, page = 1, limit = 10, sort = 'newest') => {
+    try {
+      const response = await apiClient.get(`/api/movies/${movieId}/reviews`, {
+        params: { page, limit, sort },
+      });
+      return response;
+    } catch (error) {
+      throw error || { message: "Lỗi lấy đánh giá phim" };
+    }
+  },
 
-  // 7. Thêm vào yêu thích (Sửa URL sang /api/users/favorites)
+  // 8. Lấy danh sách diễn viên
+  getPersons: async (query = '', page = 1, limit = 10) => {
+    try {
+      const response = await apiClient.get("/api/persons", {
+        params: { q: query, page, limit },
+      });
+      return response;
+    } catch (error) {
+      throw error || { message: "Lỗi lấy danh sách diễn viên" };
+    }
+  },
+
+  // 9. Chi tiết diễn viên
+  getPersonDetail: async (personId) => {
+    try {
+      const response = await apiClient.get(`/api/persons/${personId}`);
+      return response;
+    } catch (error) {
+      throw error || { message: "Lỗi lấy chi tiết diễn viên" };
+    }
+  },
+
+  // --- PHẦN QUẢN LÝ FAVORITES ---
+
+  // 10. Thêm vào yêu thích
   addFavourite: async (movieId) => {
     try {
       const response = await apiClient.post(`/api/users/favorites/${movieId}`);
@@ -85,17 +119,17 @@ export const movieService = {
     }
   },
 
-  // 8. Xóa khỏi yêu thích (Sửa URL sang /api/users/favorites)
+  // 11. Xóa khỏi yêu thích
   removeFavourite: async (movieId) => {
     try {
-      const response = await apiClient.delete(`/api/users/favorites/${movieId}`);
+      const response = await apiClient.del(`/api/users/favorites/${movieId}`);
       return response;
     } catch (error) {
       throw error || { message: "Lỗi xóa khỏi danh sách yêu thích" };
     }
   },
 
-  // 9. Lấy danh sách yêu thích (Sửa URL sang /api/users/favorites)
+  // 12. Lấy danh sách yêu thích
   getFavourites: async (page = 1) => {
     try {
       const response = await apiClient.get("/api/users/favorites", {
