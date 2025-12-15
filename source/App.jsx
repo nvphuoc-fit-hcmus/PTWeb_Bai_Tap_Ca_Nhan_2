@@ -1,6 +1,6 @@
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { ThemeProvider } from './contexts/ThemeContext';
-import { AuthProvider, useAuth } from './contexts/AuthContext';
+import { AuthProvider } from './contexts/AuthContext';
 import MainLayout from './layouts/MainLayout';
 import HomePage from './pages/HomePage';
 import LoginPage from './pages/LoginPage';
@@ -10,18 +10,7 @@ import ProfilePage from './pages/ProfilePage';
 import FavouritesPage from './pages/FavouritesPage';
 import MovieDetailPage from './pages/MovieDetailPage';
 import PersonDetailPage from './pages/PersonDetailPage';
-
-// Component bảo vệ Route
-const ProtectedRoute = ({ children }) => {
-  const { isAuthenticated, loading } = useAuth();
-  
-  if (loading) return <div className="text-center py-20">Loading...</div>; // Tránh redirect khi đang check auth
-  
-  if (!isAuthenticated) {
-    return <Navigate to="/login" replace />;
-  }
-  return children;
-};
+import ProtectedRoute from './components/ProtectedRoute';
 
 function App() {
   return (
