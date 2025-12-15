@@ -64,7 +64,6 @@ export default function HomePage() {
     return "https://via.placeholder.com/500x750?text=No+Image";
   };
 
-  // --- COMPONENT MOVIE CARD VỚI HIỆU ỨNG HOVER ---
   const MovieCard = ({ movie }) => {
     // API trả về IMDB ID trong trường 'id'
     const movieId = movie?.id;
@@ -79,10 +78,10 @@ export default function HomePage() {
         console.log('Navigating to movie:', { movieId, title: movie.title });
       }}
     >
-      {/* Container chính: Xử lý Scale và Z-index khi hover */}
+      {}
       <div className="relative aspect-[2/3] w-full overflow-hidden rounded-lg shadow-md transition-all duration-300 ease-in-out group-hover:scale-110 group-hover:z-50 group-hover:shadow-2xl bg-gray-200 dark:bg-gray-800">
         
-        {/* Ảnh Poster */}
+        {}
         <img
           src={getPosterUrl(movie)}
           alt={movie.title}
@@ -90,10 +89,10 @@ export default function HomePage() {
           onError={(e) => { e.target.src = "https://via.placeholder.com/500x750?text=No+Image"; }}
         />
 
-        {/* Lớp phủ đen mờ (Gradient Overlay) - Chỉ hiện khi hover */}
+        {}
         <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100"></div>
 
-        {/* Thông tin phim - Chỉ hiện khi hover */}
+        {}
         <div className="absolute bottom-0 left-0 w-full p-4 translate-y-4 opacity-0 transition-all duration-300 group-hover:translate-y-0 group-hover:opacity-100">
           <h3 className="text-lg font-bold text-white line-clamp-2 drop-shadow-md">
             {movie.title}
@@ -559,7 +558,7 @@ export default function HomePage() {
           <HeroSkeleton />
         ) : currentHeroMovie ? (
           <div className="relative flex items-center justify-center gap-6 animate-fadeIn">
-            {/* Left Arrow */}
+            {}
             <button 
               onClick={() => setHeroIndex((heroIndex - 1 + heroMoviesData.length) % heroMoviesData.length)} 
               className="absolute left-0 z-20 p-3 bg-white/80 dark:bg-gray-800/80 hover:bg-white dark:hover:bg-gray-700 backdrop-blur-sm rounded-full shadow-lg transition-all"
@@ -567,12 +566,12 @@ export default function HomePage() {
               <ChevronLeft className="w-6 h-6 text-gray-800 dark:text-white" />
             </button>
 
-            {/* Large Movie Card - Fixed Width Container */}
+            {}
             <div className="w-full max-w-md mx-auto px-12">
               <MovieCard movie={currentHeroMovie} />
             </div>
 
-            {/* Right Arrow */}
+            {}
             <button 
               onClick={() => setHeroIndex((heroIndex + 1) % heroMoviesData.length)} 
               className="absolute right-0 z-20 p-3 bg-white/80 dark:bg-gray-800/80 hover:bg-white dark:hover:bg-gray-700 backdrop-blur-sm rounded-full shadow-lg transition-all"
@@ -599,7 +598,7 @@ export default function HomePage() {
           </div>
         ) : (
           <div className="relative flex items-center gap-4 animate-fadeIn">
-            {/* Left Arrow */}
+            {}
             <button 
               onClick={() => setPopularPage(Math.max(0, popularPage - 1))} 
               disabled={popularPage === 0 || popularMoviesData.length === 0} 
@@ -608,7 +607,7 @@ export default function HomePage() {
               <ChevronLeft className="w-6 h-6 text-gray-800 dark:text-white" />
             </button>
 
-            {/* Grid phim với hiệu ứng hover */}
+            {}
             <div className="grid grid-cols-2 md:grid-cols-3 gap-6 py-4 px-12 w-full"> 
             {currentPopularMovies.map((movie) => (
               <div key={movie.id || movie._id} className="relative z-0 hover:z-10 transition-all duration-300">
@@ -617,7 +616,7 @@ export default function HomePage() {
             ))}
             </div>
 
-            {/* Right Arrow */}
+            {} 
             <button 
               onClick={() => setPopularPage(Math.min(popularMaxPage - 1, popularPage + 1))} 
               disabled={popularPage >= popularMaxPage - 1 || popularMoviesData.length === 0} 
@@ -641,7 +640,7 @@ export default function HomePage() {
           </div>
         ) : (
           <div className="relative flex items-center gap-4 animate-fadeIn">
-            {/* Left Arrow */}
+            {}
             <button 
               onClick={() => setTopRatedPage(Math.max(0, topRatedPage - 1))} 
               disabled={topRatedPage === 0 || topRatedData.length === 0} 
@@ -650,7 +649,7 @@ export default function HomePage() {
               <ChevronLeft className="w-6 h-6 text-gray-800 dark:text-white" />
             </button>
 
-            {/* Grid phim */}
+            {}
             <div className="grid grid-cols-2 md:grid-cols-3 gap-6 py-4 px-12 w-full">
             {currentTopRated.map((movie) => (
               <div key={movie.id || movie._id} className="relative z-0 hover:z-10 transition-all duration-300">
@@ -659,7 +658,7 @@ export default function HomePage() {
             ))}
             </div>
 
-            {/* Right Arrow */}
+            {} 
             <button 
               onClick={() => setTopRatedPage(Math.min(topRatedMaxPage - 1, topRatedPage + 1))} 
               disabled={topRatedPage >= topRatedMaxPage - 1 || topRatedData.length === 0} 

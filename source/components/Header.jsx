@@ -9,24 +9,23 @@ export default function Header() {
   const MSSV = '22120285';
 
   return (
-    // Sửa màu dark:bg-[#451a1a] để ra màu đỏ tối như trong ảnh mẫu
     <header className="sticky top-0 z-50 w-full transition-colors duration-300 px-4">
       <div className="container mx-auto h-16 flex items-center justify-between max-w-[1200px] bg-pink-100 dark:bg-[#451a1a] shadow-md rounded-xl px-4">
         
-        {/* Góc trái - MSSV */}
+        {}
         <div className="text-gray-700 dark:text-gray-200 font-medium text-sm">
           &lt;{MSSV}&gt;
         </div>
 
-        {/* Giữa - Tên app */}
+        {}
         <div className="absolute left-1/2 transform -translate-x-1/2 text-2xl font-bold uppercase tracking-wide text-gray-800 dark:text-white">
           Movies Info
         </div>
 
-        {/* Góc phải - Toggle dark mode */}
+        {}
         <div className="flex items-center gap-3">
           
-          {/* Nút Toggle Switch với icon bên ngoài */}
+          {}
           <div className="flex items-center gap-2">
             <button
               onClick={toggleTheme}
@@ -41,7 +40,7 @@ export default function Header() {
                 } inline-block w-4 h-4 transform bg-white rounded-full transition-transform duration-300 shadow-md`}
               />
             </button>
-            {/* Icon mặt trời/mặt trăng nằm bên ngoài bên phải */}
+            {}
             {isDarkMode ? (
               <Moon size={18} className="text-gray-200" />
             ) : (
@@ -49,7 +48,7 @@ export default function Header() {
             )}
           </div>
 
-          {/* User Auth */}
+          {}
           {isAuthenticated && user ? (
             <div className="flex items-center gap-3">
               <Link to="/profile" className="flex items-center gap-1 px-2 py-1 rounded hover:bg-black/10 dark:hover:bg-white/10">

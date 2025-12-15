@@ -24,7 +24,7 @@ async function request(path, { method = 'GET', headers = {}, body, params } = {}
   // 2. Lấy User Token từ LocalStorage (Token đăng nhập của người dùng)
   const userToken = localStorage.getItem('accessToken');
 
-  // 3. Cấu hình Headers chuẩn theo tài liệu
+  // 3. Cấu hình Headers 
   const configHeaders = {
     'Content-Type': 'application/json',
     'x-app-token': APP_TOKEN,

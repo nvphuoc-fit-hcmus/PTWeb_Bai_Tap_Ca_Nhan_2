@@ -13,7 +13,7 @@ export default function SearchPage() {
   const [totalPages, setTotalPages] = useState(1);
   const query = params.get('q') || ''; // Lấy keyword từ URL
 
-  // --- HÀM LẤY ẢNH (Dùng chung logic với HomePage) ---
+  // --- HÀM LẤY ẢNH  ---
   const getPosterUrl = (movie) => {
     if (movie.image) {
       if (movie.image.startsWith('http')) return movie.image;

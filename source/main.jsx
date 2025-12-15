@@ -7,7 +7,7 @@ import { ThemeProvider } from './contexts/ThemeContext.jsx'
 
 createRoot(document.getElementById('root')).render(
   <StrictMode>
-    {/* 2. Bọc ThemeProvider ra ngoài App */}
+    {}
     <ThemeProvider>
       <App />
     </ThemeProvider>

@@ -10,7 +10,7 @@ export default function FavouritesPage() {
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
 
-  // --- HÀM LẤY ẢNH (đồng bộ với HomePage và robust hơn) ---
+  // --- HÀM LẤY ẢNH 
   const getPosterUrl = (movie) => {
     if (!movie) return 'https://via.placeholder.com/500x750?text=No+Image';
     const candidate = [
@@ -115,7 +115,7 @@ export default function FavouritesPage() {
                 className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
                 onError={(e) => {e.target.src = 'https://via.placeholder.com/500x750?text=No+Image'}}
               />
-              {/* Rating badge */}
+              {}
               {(movie.rate || movie.vote_average) && (
                   <div className="absolute top-2 right-2 bg-yellow-400 text-xs font-bold px-2 py-1 rounded shadow">
                       ★ {movie.rate || movie.vote_average}

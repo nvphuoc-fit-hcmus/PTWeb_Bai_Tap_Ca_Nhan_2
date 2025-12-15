@@ -6,7 +6,7 @@ import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
 
 const schema = z.object({
-  username: z.string().min(3, 'Username phải tối thiểu 3 ký tự'), // Sửa email -> username
+  username: z.string().min(3, 'Username phải tối thiểu 3 ký tự'), 
   password: z.string().min(6, 'Password tối thiểu 6 ký tự'),
 });
 

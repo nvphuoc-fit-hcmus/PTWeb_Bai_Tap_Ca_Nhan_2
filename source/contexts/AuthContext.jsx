@@ -56,7 +56,7 @@ export function AuthProvider({ children }) {
   };
 
   const logout = () => {
-    authService.logout().catch(() => {}); // Gọi API logout (không quan trọng thành công hay thất bại)
+    authService.logout().catch(() => {}); // Gọi API logout 
     localStorage.removeItem('accessToken');
     setUser(null);
     setIsAuthenticated(false);

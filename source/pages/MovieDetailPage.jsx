@@ -19,7 +19,7 @@ export default function MovieDetailPage() {
   const [reviewPage, setReviewPage] = useState(1);
   const [reviewTotalPages, setReviewTotalPages] = useState(1);
 
-  // --- HÀM LẤY ẢNH (Chuẩn hóa) ---
+  // --- HÀM LẤY ẢNH 
   const getPosterUrl = (path) => {
     if (!path) return 'https://via.placeholder.com/500x750?text=No+Image';
     if (path.startsWith('http')) return path;
@@ -119,7 +119,7 @@ export default function MovieDetailPage() {
         if (!total && response.total) {
           total = Math.ceil(response.total / 4);
         }
-        // Fallback: nếu data đầy (4 items) thì giả sử có trang tiếp theo
+        // nếu data đầy (4 items) thì giả sử có trang tiếp theo
         if (!total && reviewsData.length === 4) {
           total = reviewPage + 1;
         }
@@ -193,9 +193,9 @@ export default function MovieDetailPage() {
 
   return (
     <div className="container mx-auto px-4 py-8 max-w-[1200px]">
-      {/* --- PHẦN INFO PHIM --- */}
+      {}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-12">
-        {/* Poster */}
+        {}
         <div>
           <img 
             src={getPosterUrl(movie.image || movie.poster)} 
@@ -233,10 +233,10 @@ export default function MovieDetailPage() {
                 </span>
             </p>
             
-            {/* Xử lý Đạo diễn (API trả về mảng directors) */}
+            {}
             <p><strong>Đạo diễn:</strong> {movie.directors?.map(d => d.name).join(', ') || 'N/A'}</p>
             
-            {/* Xử lý Thể loại (API trả về mảng strings) */}
+            {}
             <p><strong>Thể loại:</strong> {movie.genres?.join(', ') || 'N/A'}</p>
           </div>
 
