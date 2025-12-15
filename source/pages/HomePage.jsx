@@ -10,8 +10,27 @@ export default function HomePage() {
   const [topRatedPage, setTopRatedPage] = useState(0);
   const [allPopularMovies, setAllPopularMovies] = useState([]);
   const [allTopRated, setAllTopRated] = useState([]);
-  const [loadingPopular, setLoadingPopular] = useState(false);
-  const [loadingTopRated, setLoadingTopRated] = useState(false);
+  const [loadingPopular, setLoadingPopular] = useState(true);
+  const [loadingTopRated, setLoadingTopRated] = useState(true);
+  const [loadingHero, setLoadingHero] = useState(true);
+  const [pageLoading, setPageLoading] = useState(true);
+
+  // --- LOADING SKELETON COMPONENTS ---
+  const MovieCardSkeleton = () => (
+    <div className="relative aspect-[2/3] w-full overflow-hidden rounded-lg bg-gray-200 dark:bg-gray-800 animate-pulse">
+      <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent animate-shimmer"></div>
+    </div>
+  );
+
+  const HeroSkeleton = () => (
+    <div className="w-full max-w-md mx-auto px-12">
+      <div className="relative aspect-[2/3] w-full overflow-hidden rounded-lg bg-gray-200 dark:bg-gray-800 animate-pulse">
+        <div className="absolute inset-0 flex items-center justify-center">
+          <div className="animate-spin h-12 w-12 border-4 border-blue-500 rounded-full border-t-transparent"></div>
+        </div>
+      </div>
+    </div>
+  );
 
   // --- HÀM HỖ TRỢ LẤY LINK ẢNH ---
   const getPosterUrl = (movie) => {
@@ -93,9 +112,10 @@ export default function HomePage() {
     );
   };
 
-  // --- CÁC HÀM LOAD DATA (GIỮ NGUYÊN) ---
+  // --- CÁC HÀM LOAD DATA ---
   useEffect(() => {
     const loadHero = async () => {
+      setLoadingHero(true);
       try {
         const response = await movieService.getMovies(1, 5);
         console.log('Hero movies response:', response);
@@ -103,6 +123,8 @@ export default function HomePage() {
       } catch (error) { 
         console.error("Lỗi tải phim Hero:", error); 
         setHeroMovies([]); 
+      } finally {
+        setLoadingHero(false);
       }
     };
     loadHero();
@@ -161,6 +183,15 @@ export default function HomePage() {
     };
     loadTopRated();
   }, []);
+
+  // Track khi tất cả data đã load xong
+  useEffect(() => {
+    if (!loadingHero && !loadingPopular && !loadingTopRated) {
+      // Delay nhỏ để smooth transition
+      const timer = setTimeout(() => setPageLoading(false), 300);
+      return () => clearTimeout(timer);
+    }
+  }, [loadingHero, loadingPopular, loadingTopRated]);
 
   // Fallback data for Hero movies
   const defaultHeroMovies = [
@@ -524,9 +555,10 @@ export default function HomePage() {
       
       {/* HERO SECTION */}
       <section className="container mx-auto px-4 md:px-12 max-w-[1200px]">
-
-        {currentHeroMovie ? (
-          <div className="relative flex items-center justify-center gap-6">
+        {loadingHero ? (
+          <HeroSkeleton />
+        ) : currentHeroMovie ? (
+          <div className="relative flex items-center justify-center gap-6 animate-fadeIn">
             {/* Left Arrow */}
             <button 
               onClick={() => setHeroIndex((heroIndex - 1 + heroMoviesData.length) % heroMoviesData.length)} 
@@ -549,8 +581,8 @@ export default function HomePage() {
             </button>
           </div>
         ) : (
-          <div className="h-[400px] flex items-center justify-center">
-            <div className="animate-spin h-10 w-10 border-4 border-blue-500 rounded-full border-t-transparent"></div>
+          <div className="h-[400px] flex items-center justify-center text-gray-500 dark:text-gray-400">
+            <p>Không có phim nào để hiển thị</p>
           </div>
         )}
       </section>
@@ -559,69 +591,105 @@ export default function HomePage() {
       <section className="container mx-auto px-4 md:px-12 max-w-[1200px]">
         <h2 className="text-2xl font-bold border-l-4 border-blue-500 pl-3 mb-6">Most Popular</h2>
 
-        <div className="relative flex items-center gap-4">
-          {/* Left Arrow */}
-          <button 
-            onClick={() => setPopularPage(Math.max(0, popularPage - 1))} 
-            disabled={popularPage === 0 || popularMoviesData.length === 0} 
-            className="absolute left-0 z-20 p-3 bg-white/80 dark:bg-gray-800/80 hover:bg-white dark:hover:bg-gray-700 backdrop-blur-sm rounded-full shadow-lg transition-all disabled:opacity-30 disabled:cursor-not-allowed"
-          >
-            <ChevronLeft className="w-6 h-6 text-gray-800 dark:text-white" />
-          </button>
-
-          {/* Grid phim với hiệu ứng hover */}
-          <div className="grid grid-cols-2 md:grid-cols-3 gap-6 py-4 px-12 w-full"> 
-          {currentPopularMovies.map((movie) => (
-            <div key={movie.id || movie._id} className="relative z-0 hover:z-10 transition-all duration-300">
-                <MovieCard movie={movie} />
-            </div>
-          ))}
+        {loadingPopular ? (
+          <div className="grid grid-cols-2 md:grid-cols-3 gap-6 py-4 px-12 w-full">
+            {[1, 2, 3].map((i) => (
+              <MovieCardSkeleton key={i} />
+            ))}
           </div>
+        ) : (
+          <div className="relative flex items-center gap-4 animate-fadeIn">
+            {/* Left Arrow */}
+            <button 
+              onClick={() => setPopularPage(Math.max(0, popularPage - 1))} 
+              disabled={popularPage === 0 || popularMoviesData.length === 0} 
+              className="absolute left-0 z-20 p-3 bg-white/80 dark:bg-gray-800/80 hover:bg-white dark:hover:bg-gray-700 backdrop-blur-sm rounded-full shadow-lg transition-all disabled:opacity-30 disabled:cursor-not-allowed"
+            >
+              <ChevronLeft className="w-6 h-6 text-gray-800 dark:text-white" />
+            </button>
 
-          {/* Right Arrow */}
-          <button 
-            onClick={() => setPopularPage(Math.min(popularMaxPage - 1, popularPage + 1))} 
-            disabled={popularPage >= popularMaxPage - 1 || popularMoviesData.length === 0} 
-            className="absolute right-0 z-20 p-3 bg-white/80 dark:bg-gray-800/80 hover:bg-white dark:hover:bg-gray-700 backdrop-blur-sm rounded-full shadow-lg transition-all disabled:opacity-30 disabled:cursor-not-allowed"
-          >
-            <ChevronRight className="w-6 h-6 text-gray-800 dark:text-white" />
-          </button>
-        </div>
+            {/* Grid phim với hiệu ứng hover */}
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-6 py-4 px-12 w-full"> 
+            {currentPopularMovies.map((movie) => (
+              <div key={movie.id || movie._id} className="relative z-0 hover:z-10 transition-all duration-300">
+                  <MovieCard movie={movie} />
+              </div>
+            ))}
+            </div>
+
+            {/* Right Arrow */}
+            <button 
+              onClick={() => setPopularPage(Math.min(popularMaxPage - 1, popularPage + 1))} 
+              disabled={popularPage >= popularMaxPage - 1 || popularMoviesData.length === 0} 
+              className="absolute right-0 z-20 p-3 bg-white/80 dark:bg-gray-800/80 hover:bg-white dark:hover:bg-gray-700 backdrop-blur-sm rounded-full shadow-lg transition-all disabled:opacity-30 disabled:cursor-not-allowed"
+            >
+              <ChevronRight className="w-6 h-6 text-gray-800 dark:text-white" />
+            </button>
+          </div>
+        )}
       </section>
 
       {/* TOP RATING */}
       <section className="container mx-auto px-4 md:px-12 max-w-[1200px]">
         <h2 className="text-2xl font-bold border-l-4 border-yellow-500 pl-3 mb-6">Top Rating</h2>
 
-        <div className="relative flex items-center gap-4">
-          {/* Left Arrow */}
-          <button 
-            onClick={() => setTopRatedPage(Math.max(0, topRatedPage - 1))} 
-            disabled={topRatedPage === 0 || topRatedData.length === 0} 
-            className="absolute left-0 z-20 p-3 bg-white/80 dark:bg-gray-800/80 hover:bg-white dark:hover:bg-gray-700 backdrop-blur-sm rounded-full shadow-lg transition-all disabled:opacity-30 disabled:cursor-not-allowed"
-          >
-            <ChevronLeft className="w-6 h-6 text-gray-800 dark:text-white" />
-          </button>
-
-          {/* Grid phim */}
+        {loadingTopRated ? (
           <div className="grid grid-cols-2 md:grid-cols-3 gap-6 py-4 px-12 w-full">
-          {currentTopRated.map((movie) => (
-            <div key={movie.id || movie._id} className="relative z-0 hover:z-10 transition-all duration-300">
-                <MovieCard movie={movie} />
-            </div>
-          ))}
+            {[1, 2, 3].map((i) => (
+              <MovieCardSkeleton key={i} />
+            ))}
           </div>
+        ) : (
+          <div className="relative flex items-center gap-4 animate-fadeIn">
+            {/* Left Arrow */}
+            <button 
+              onClick={() => setTopRatedPage(Math.max(0, topRatedPage - 1))} 
+              disabled={topRatedPage === 0 || topRatedData.length === 0} 
+              className="absolute left-0 z-20 p-3 bg-white/80 dark:bg-gray-800/80 hover:bg-white dark:hover:bg-gray-700 backdrop-blur-sm rounded-full shadow-lg transition-all disabled:opacity-30 disabled:cursor-not-allowed"
+            >
+              <ChevronLeft className="w-6 h-6 text-gray-800 dark:text-white" />
+            </button>
 
-          {/* Right Arrow */}
-          <button 
-            onClick={() => setTopRatedPage(Math.min(topRatedMaxPage - 1, topRatedPage + 1))} 
-            disabled={topRatedPage >= topRatedMaxPage - 1 || topRatedData.length === 0} 
-            className="absolute right-0 z-20 p-3 bg-white/80 dark:bg-gray-800/80 hover:bg-white dark:hover:bg-gray-700 backdrop-blur-sm rounded-full shadow-lg transition-all disabled:opacity-30 disabled:cursor-not-allowed"
-          >
-            <ChevronRight className="w-6 h-6 text-gray-800 dark:text-white" />
-          </button>
-        </div>
+            {/* Grid phim */}
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-6 py-4 px-12 w-full">
+            {currentTopRated.map((movie) => (
+              <div key={movie.id || movie._id} className="relative z-0 hover:z-10 transition-all duration-300">
+                  <MovieCard movie={movie} />
+              </div>
+            ))}
+            </div>
+
+            {/* Right Arrow */}
+            <button 
+              onClick={() => setTopRatedPage(Math.min(topRatedMaxPage - 1, topRatedPage + 1))} 
+              disabled={topRatedPage >= topRatedMaxPage - 1 || topRatedData.length === 0} 
+              className="absolute right-0 z-20 p-3 bg-white/80 dark:bg-gray-800/80 hover:bg-white dark:hover:bg-gray-700 backdrop-blur-sm rounded-full shadow-lg transition-all disabled:opacity-30 disabled:cursor-not-allowed"
+            >
+              <ChevronRight className="w-6 h-6 text-gray-800 dark:text-white" />
+            </button>
+          </div>
+        )}
       </section>
+
+      {/* PAGE LOADING OVERLAY */}
+      {pageLoading && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-white dark:bg-gray-900 transition-opacity duration-300">
+          <div className="text-center">
+            <div className="relative w-20 h-20 mx-auto mb-4">
+              <div className="absolute inset-0 border-4 border-blue-200 dark:border-blue-900 rounded-full"></div>
+              <div className="absolute inset-0 border-4 border-blue-600 dark:border-blue-400 rounded-full border-t-transparent animate-spin"></div>
+            </div>
+            <p className="text-lg font-semibold text-gray-800 dark:text-gray-200 animate-pulse">
+              Đang tải trang chủ...
+            </p>
+            <div className="mt-4 flex justify-center gap-2">
+              <div className="w-2 h-2 bg-blue-600 dark:bg-blue-400 rounded-full animate-bounce" style={{ animationDelay: '0s' }}></div>
+              <div className="w-2 h-2 bg-blue-600 dark:bg-blue-400 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
+              <div className="w-2 h-2 bg-blue-600 dark:bg-blue-400 rounded-full animate-bounce" style={{ animationDelay: '0.4s' }}></div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
