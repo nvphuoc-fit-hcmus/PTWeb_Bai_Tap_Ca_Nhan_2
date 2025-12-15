@@ -112,14 +112,24 @@ export default function HomePage() {
     const loadPopular = async () => {
       setLoadingPopular(true);
       try {
-        // Fetch nhiều hơn để đảm bảo có đủ 15-30 movies
-        const response = await movieService.getPopular(1);
-        console.log('Popular response:', response);
-        const movies = response.data || response.results || [];
-        // Lấy tối đa 30 movies, tối thiểu 15 (fallback nếu API trả ít)
-        const limitedMovies = movies.slice(0, 30);
-        setAllPopularMovies(limitedMovies.length >= 15 ? limitedMovies : defaultPopularMovies.slice(0, 30));
-      } catch (error) { console.error("Lỗi tải phim popular:", error); setAllPopularMovies(defaultPopularMovies.slice(0, 30)); } 
+        let allMovies = [];
+        let page = 1;
+        // Fetch cho đến khi có đủ 15-30 movies hoặc hết data
+        while (allMovies.length < 30 && page <= 3) {
+          const response = await movieService.getPopular(page);
+          const movies = response.data || response.results || [];
+          if (movies.length === 0) break;
+          allMovies = [...allMovies, ...movies.filter((m) => m?.id)];
+          page++;
+        }
+        console.log(`Popular: loaded ${allMovies.length} movies`);
+        // Đảm bảo 15-30 movies
+        const limitedMovies = allMovies.slice(0, 30);
+        setAllPopularMovies(limitedMovies);
+      } catch (error) { 
+        console.error("Lỗi tải phim popular:", error); 
+        setAllPopularMovies([]); 
+      } 
       finally { setLoadingPopular(false); }
     };
     loadPopular();
@@ -129,14 +139,24 @@ export default function HomePage() {
     const loadTopRated = async () => {
       setLoadingTopRated(true);
       try {
-        // Fetch nhiều hơn để đảm bảo có đủ 15-30 movies
-        const response = await movieService.getTopRated(1);
-        console.log('TopRated response:', response);
-        const movies = response.data || response.results || [];
-        // Lấy tối đa 30 movies, tối thiểu 15 (fallback nếu API trả ít)
-        const limitedMovies = movies.slice(0, 30);
-        setAllTopRated(limitedMovies.length >= 15 ? limitedMovies : defaultTopRated.slice(0, 30));
-      } catch (error) { console.error("Lỗi tải phim top rated:", error); setAllTopRated(defaultTopRated.slice(0, 30)); } 
+        let allMovies = [];
+        let page = 1;
+        // Fetch cho đến khi có đủ 15-30 movies hoặc hết data
+        while (allMovies.length < 30 && page <= 3) {
+          const response = await movieService.getTopRated(page);
+          const movies = response.data || response.results || [];
+          if (movies.length === 0) break;
+          allMovies = [...allMovies, ...movies.filter((m) => m?.id)];
+          page++;
+        }
+        console.log(`TopRated: loaded ${allMovies.length} movies`);
+        // Đảm bảo 15-30 movies
+        const limitedMovies = allMovies.slice(0, 30);
+        setAllTopRated(limitedMovies);
+      } catch (error) { 
+        console.error("Lỗi tải phim top rated:", error); 
+        setAllTopRated([]); 
+      } 
       finally { setLoadingTopRated(false); }
     };
     loadTopRated();
@@ -491,12 +511,12 @@ export default function HomePage() {
   const currentHeroMovie = heroMoviesData.length > 0 ? heroMoviesData[heroIndex] : null;
   const itemsPerPage = 3; // 3 movies mỗi trang
 
-  const popularMoviesData = allPopularMovies.length > 0 ? allPopularMovies : defaultPopularMovies;
-  const popularMaxPage = Math.ceil(popularMoviesData.length / itemsPerPage);
+  const popularMoviesData = allPopularMovies;
+  const popularMaxPage = Math.max(1, Math.ceil(popularMoviesData.length / itemsPerPage));
   const currentPopularMovies = popularMoviesData.slice(popularPage * itemsPerPage, (popularPage + 1) * itemsPerPage);
 
-  const topRatedData = allTopRated.length > 0 ? allTopRated : defaultTopRated;
-  const topRatedMaxPage = Math.ceil(topRatedData.length / itemsPerPage);
+  const topRatedData = allTopRated;
+  const topRatedMaxPage = Math.max(1, Math.ceil(topRatedData.length / itemsPerPage));
   const currentTopRated = topRatedData.slice(topRatedPage * itemsPerPage, (topRatedPage + 1) * itemsPerPage);
 
   return (
@@ -543,7 +563,7 @@ export default function HomePage() {
           {/* Left Arrow */}
           <button 
             onClick={() => setPopularPage(Math.max(0, popularPage - 1))} 
-            disabled={popularPage === 0} 
+            disabled={popularPage === 0 || popularMoviesData.length === 0} 
             className="absolute left-0 z-20 p-3 bg-white/80 dark:bg-gray-800/80 hover:bg-white dark:hover:bg-gray-700 backdrop-blur-sm rounded-full shadow-lg transition-all disabled:opacity-30 disabled:cursor-not-allowed"
           >
             <ChevronLeft className="w-6 h-6 text-gray-800 dark:text-white" />
@@ -561,7 +581,7 @@ export default function HomePage() {
           {/* Right Arrow */}
           <button 
             onClick={() => setPopularPage(Math.min(popularMaxPage - 1, popularPage + 1))} 
-            disabled={popularPage >= popularMaxPage - 1} 
+            disabled={popularPage >= popularMaxPage - 1 || popularMoviesData.length === 0} 
             className="absolute right-0 z-20 p-3 bg-white/80 dark:bg-gray-800/80 hover:bg-white dark:hover:bg-gray-700 backdrop-blur-sm rounded-full shadow-lg transition-all disabled:opacity-30 disabled:cursor-not-allowed"
           >
             <ChevronRight className="w-6 h-6 text-gray-800 dark:text-white" />
@@ -577,7 +597,7 @@ export default function HomePage() {
           {/* Left Arrow */}
           <button 
             onClick={() => setTopRatedPage(Math.max(0, topRatedPage - 1))} 
-            disabled={topRatedPage === 0} 
+            disabled={topRatedPage === 0 || topRatedData.length === 0} 
             className="absolute left-0 z-20 p-3 bg-white/80 dark:bg-gray-800/80 hover:bg-white dark:hover:bg-gray-700 backdrop-blur-sm rounded-full shadow-lg transition-all disabled:opacity-30 disabled:cursor-not-allowed"
           >
             <ChevronLeft className="w-6 h-6 text-gray-800 dark:text-white" />
@@ -595,7 +615,7 @@ export default function HomePage() {
           {/* Right Arrow */}
           <button 
             onClick={() => setTopRatedPage(Math.min(topRatedMaxPage - 1, topRatedPage + 1))} 
-            disabled={topRatedPage >= topRatedMaxPage - 1} 
+            disabled={topRatedPage >= topRatedMaxPage - 1 || topRatedData.length === 0} 
             className="absolute right-0 z-20 p-3 bg-white/80 dark:bg-gray-800/80 hover:bg-white dark:hover:bg-gray-700 backdrop-blur-sm rounded-full shadow-lg transition-all disabled:opacity-30 disabled:cursor-not-allowed"
           >
             <ChevronRight className="w-6 h-6 text-gray-800 dark:text-white" />

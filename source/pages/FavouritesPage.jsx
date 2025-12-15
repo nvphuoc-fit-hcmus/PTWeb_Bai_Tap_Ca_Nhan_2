@@ -7,47 +7,25 @@ export default function FavouritesPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
-  // --- HÀM LẤY ẢNH (Copy từ HomePage sang để đồng bộ) ---
+  // --- HÀM LẤY ẢNH (đồng bộ với HomePage và robust hơn) ---
   const getPosterUrl = (movie) => {
     if (!movie) return 'https://via.placeholder.com/500x750?text=No+Image';
-    let imageUrl = '';
-    if (
-      movie.image && typeof movie.image === 'string' && movie.image.trim() && movie.image !== 'string'
-    ) {
-      imageUrl = movie.image;
-    } else if (
-      movie.poster && typeof movie.poster === 'string' && movie.poster.trim()
-    ) {
-      imageUrl = movie.poster;
-    } else if (
-      movie.poster_path && typeof movie.poster_path === 'string' && movie.poster_path.trim()
-    ) {
-      imageUrl = movie.poster_path;
-    } else if (
-      movie.backdrop && typeof movie.backdrop === 'string' && movie.backdrop.trim()
-    ) {
-      imageUrl = movie.backdrop;
-    } else if (
-      movie.backdrop_path && typeof movie.backdrop_path === 'string' && movie.backdrop_path.trim()
-    ) {
-      imageUrl = movie.backdrop_path;
-    } else if (
-      movie.thumbnail && typeof movie.thumbnail === 'string' && movie.thumbnail.trim()
-    ) {
-      imageUrl = movie.thumbnail;
-    } else if (
-      movie.posterURL && typeof movie.posterURL === 'string' && movie.posterURL.trim()
-    ) {
-      imageUrl = movie.posterURL;
-    } else if (
-      movie.posterUrl && typeof movie.posterUrl === 'string' && movie.posterUrl.trim()
-    ) {
-      imageUrl = movie.posterUrl;
-    }
+    const candidate = [
+      movie.image,
+      movie.poster,
+      movie.poster_path,
+      movie.backdrop,
+      movie.backdrop_path,
+      movie.thumbnail,
+      movie.posterURL,
+      movie.posterUrl,
+      movie.imageUrl,
+      movie.fullImage,
+    ].find((v) => typeof v === 'string' && v.trim() && v.trim() !== 'string');
 
-    if (imageUrl) {
-      if (imageUrl.startsWith('http')) return imageUrl;
-      const cleanPath = imageUrl.startsWith('/') ? imageUrl : `/${imageUrl}`;
+    if (candidate) {
+      if (candidate.startsWith('http')) return candidate;
+      const cleanPath = candidate.startsWith('/') ? candidate : `/${candidate}`;
       return `https://image.tmdb.org/t/p/w500${cleanPath}`;
     }
     return 'https://via.placeholder.com/500x750?text=No+Image';
