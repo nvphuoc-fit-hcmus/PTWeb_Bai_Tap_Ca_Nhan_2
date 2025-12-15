@@ -1,68 +1,70 @@
 import { Link } from 'react-router-dom';
 import { Moon, Sun, Settings } from 'lucide-react';
+import { useTheme } from '../contexts/ThemeContext'; 
+// import { useAuth } from '../contexts/AuthContext'; // Nếu có AuthContext thì import
 
-export default function Header({ isDarkMode, toggleTheme, user, onLogout }) {
+export default function Header() {
+  const { isDarkMode, toggleTheme } = useTheme(); // Lấy trực tiếp từ Context
+  // const { user, logout } = useAuth(); // Lấy user từ AuthContext (nếu có)
+  
+  // Tạm thời giả lập user để chỉnh UI (sau này thay bằng context thật)
+  const user = null; 
   const MSSV = '22120285';
 
   return (
-    <header className="bg-pink-100 dark:bg-pink-900 py-4 px-6 shadow-md">
-      <div className="max-w-[1200px] mx-auto flex items-center justify-between">
+    // Sửa màu dark:bg-[#451a1a] để ra màu đỏ tối như trong ảnh mẫu
+    <header className="sticky top-0 z-50 w-full transition-colors duration-300 bg-pink-100 dark:bg-[#451a1a] shadow-md">
+      <div className="container mx-auto px-4 h-16 flex items-center justify-between">
+        
         {/* Góc trái - MSSV */}
-        <div className="text-gray-700 dark:text-gray-200 font-semibold text-lg">
-          {MSSV}
+        <div className="text-gray-700 dark:text-gray-200 font-medium text-sm">
+          &lt;{MSSV}&gt;
         </div>
 
         {/* Giữa - Tên app */}
-        <Link
-          to="/"
-          className="text-2xl font-bold text-gray-800 dark:text-white hover:text-gray-600 transition-colors"
-        >
+        <div className="absolute left-1/2 transform -translate-x-1/2 text-2xl font-bold uppercase tracking-wide text-gray-800 dark:text-white">
           Movies Info
-        </Link>
+        </div>
 
         {/* Góc phải - Toggle dark mode và Settings */}
         <div className="flex items-center gap-3">
-          {/* Nút toggle dark mode */}
+          
+          {/* Nút Toggle Switch (Giống ảnh mẫu) */}
           <button
             onClick={toggleTheme}
-            className="p-2 rounded-lg bg-white dark:bg-gray-700 hover:bg-gray-100 transition-colors shadow-sm"
-            aria-label="Chuyển chế độ sáng/tối"
+            className={`relative inline-flex items-center h-6 w-11 rounded-full transition-colors duration-300 focus:outline-none ${
+              isDarkMode ? 'bg-gray-600' : 'bg-gray-300'
+            }`}
           >
-            {isDarkMode ? (
-              <Sun className="w-5 h-5 text-yellow-400" />
-            ) : (
-              <Moon className="w-5 h-5 text-gray-700" />
-            )}
+            <span className="sr-only">Toggle theme</span>
+            <span
+              className={`${
+                isDarkMode ? 'translate-x-6' : 'translate-x-1'
+              } inline-block w-4 h-4 transform bg-white rounded-full transition-transform duration-300 flex items-center justify-center`}
+            >
+               {/* Icon nhỏ bên trong nút tròn */}
+               {isDarkMode ? (
+                 <Moon size={10} className="text-black" />
+               ) : (
+                 <Sun size={10} className="text-yellow-500" />
+               )}
+            </span>
           </button>
 
           {/* Icon settings */}
-          <Link
-            to="/settings"
-            className="p-2 rounded-lg hover:bg-pink-200 dark:hover:bg-pink-800 transition-colors"
-          >
+          <button className="p-2 rounded-full hover:bg-black/10 dark:hover:bg-white/10 transition-colors">
             <Settings className="w-5 h-5 text-gray-700 dark:text-gray-200" />
-          </Link>
+          </button>
 
-          {/* Thông tin user hoặc nút login */}
+          {/* User Auth */}
           {user ? (
             <div className="flex items-center gap-2">
-              <Link
-                to="/profile"
-                className="text-sm font-medium text-gray-700 dark:text-gray-200 hover:underline"
-              >
-                {user.name || user.email}
-              </Link>
-              <button
-                onClick={onLogout}
-                className="text-xs px-3 py-1 bg-red-500 text-white rounded hover:bg-red-600"
-              >
-                Đăng xuất
-              </button>
+              <span className="text-sm font-medium dark:text-white">User</span>
             </div>
           ) : (
             <Link
               to="/login"
-              className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 font-medium text-sm"
+              className="px-3 py-1 bg-blue-500 text-white rounded text-sm hover:bg-blue-600 font-medium transition-colors"
             >
               Đăng nhập
             </Link>
