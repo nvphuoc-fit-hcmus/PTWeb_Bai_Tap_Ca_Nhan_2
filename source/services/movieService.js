@@ -1,7 +1,7 @@
 import apiClient from "../lib/api";
 
 export const movieService = {
-  // 1. Lấy danh sách phim (Get list of movies)
+  // 1. Lấy danh sách phim
   getMovies: async (page = 1, limit = 10) => {
     try {
       const response = await apiClient.get("/api/movies", {
@@ -18,7 +18,7 @@ export const movieService = {
     try {
       const response = await apiClient.get("/api/movies/search", {
         params: {
-          q: query, // <-- SỬA TÊN THAM SỐ Ở ĐÂY CHO KHỚP API
+          q: query,
           page,
           limit: 20,
         },
@@ -29,14 +29,11 @@ export const movieService = {
     }
   },
 
-  // 3. Lấy danh sách phim phổ biến (SỬA URL: popular -> most-popular)
+  // 3. Phim phổ biến
   getPopular: async (page = 1) => {
     try {
       const response = await apiClient.get("/api/movies/most-popular", {
-        params: {
-          page,
-          limit: 20,
-        },
+        params: { page, limit: 20 },
       });
       return response;
     } catch (error) {
@@ -44,14 +41,11 @@ export const movieService = {
     }
   },
 
-  // 4. Lấy danh sách phim xếp hạng cao
+  // 4. Phim xếp hạng cao
   getTopRated: async (page = 1) => {
     try {
       const response = await apiClient.get("/api/movies/top-rated", {
-        params: {
-          page,
-          limit: 20,
-        },
+        params: { page, limit: 20 },
       });
       return response;
     } catch (error) {
@@ -59,7 +53,7 @@ export const movieService = {
     }
   },
 
-  // 5. Lấy chi tiết phim theo ID
+  // 5. Chi tiết phim
   getMovieDetail: async (movieId) => {
     try {
       const response = await apiClient.get(`/api/movies/${movieId}`);
@@ -69,7 +63,7 @@ export const movieService = {
     }
   },
 
-  // 6. Lấy danh sách diễn viên của phim
+  // 6. Lấy danh sách diễn viên (Wrapper)
   getMovieCast: async (movieId) => {
     try {
         const response = await apiClient.get(`/api/movies/${movieId}`);
@@ -79,36 +73,33 @@ export const movieService = {
     }
   },
 
-  // 7. Thêm phim vào danh sách yêu thích
+  // --- PHẦN SỬA ĐỔI QUAN TRỌNG (FAVORITES) ---
+
+  // 7. Thêm vào yêu thích (Sửa URL sang /api/users/favorites)
   addFavourite: async (movieId) => {
     try {
-      const response = await apiClient.post(`/api/movies/${movieId}/favourite`);
+      const response = await apiClient.post(`/api/users/favorites/${movieId}`);
       return response;
     } catch (error) {
       throw error || { message: "Lỗi thêm vào danh sách yêu thích" };
     }
   },
 
-  // 8. Xóa phim khỏi danh sách yêu thích
+  // 8. Xóa khỏi yêu thích (Sửa URL sang /api/users/favorites)
   removeFavourite: async (movieId) => {
     try {
-      const response = await apiClient.delete(
-        `/api/movies/${movieId}/favourite`
-      );
+      const response = await apiClient.delete(`/api/users/favorites/${movieId}`);
       return response;
     } catch (error) {
       throw error || { message: "Lỗi xóa khỏi danh sách yêu thích" };
     }
   },
 
-  // 9. Lấy danh sách yêu thích của user
+  // 9. Lấy danh sách yêu thích (Sửa URL sang /api/users/favorites)
   getFavourites: async (page = 1) => {
     try {
-      const response = await apiClient.get("/api/movies/favourites", {
-        params: {
-          page,
-          limit: 20,
-        },
+      const response = await apiClient.get("/api/users/favorites", {
+        params: { page, limit: 20 },
       });
       return response;
     } catch (error) {

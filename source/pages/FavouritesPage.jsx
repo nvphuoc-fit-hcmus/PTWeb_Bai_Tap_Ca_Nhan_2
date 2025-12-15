@@ -7,19 +7,30 @@ export default function FavouritesPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
-  // Hàm tải dữ liệu
+  // --- HÀM LẤY ẢNH (Copy từ HomePage sang để đồng bộ) ---
+  const getPosterUrl = (movie) => {
+    if (!movie) return 'https://via.placeholder.com/500x750?text=No+Image';
+    // 1. Ưu tiên image từ API mới
+    if (movie.image && movie.image.startsWith('http')) return movie.image;
+    if (movie.image) return `https://image.tmdb.org/t/p/w500${movie.image}`;
+    // 2. Fallback
+    if (movie.poster) return movie.poster;
+    if (movie.poster_path) return `https://image.tmdb.org/t/p/w500${movie.poster_path}`;
+    return 'https://via.placeholder.com/500x750?text=No+Image';
+  };
+
   useEffect(() => {
     const loadFavourites = async () => {
       setLoading(true);
-      setError('');
       try {
-        const response = await movieService.getFavourites(); 
-        const movies = response.data || response.results || [];
+        // API getFavourites trả về mảng trực tiếp (theo code service mới sửa)
+        const response = await movieService.getFavourites();
+        // Kiểm tra xem response có phải mảng không, nếu không thì tìm trong .data
+        const movies = Array.isArray(response) ? response : (response.data || []);
         setFavourites(movies);
       } catch (err) {
-        console.error('Load favourites error:', err);
-        setError('Lỗi tải danh sách yêu thích. Vui lòng thử lại sau.');
-        setFavourites([]);
+        console.error('Lỗi tải favorites:', err);
+        setError('Không thể tải danh sách yêu thích.');
       } finally {
         setLoading(false);
       }
@@ -27,101 +38,76 @@ export default function FavouritesPage() {
     loadFavourites();
   }, []);
 
-  // Hàm xóa phim
   const handleRemove = async (movieId) => {
-    // Cập nhật giao diện ngay lập tức (Optimistic UI) để user cảm thấy nhanh hơn
-    const previousFavourites = [...favourites];
-    setFavourites(favourites.filter((m) => m.id !== movieId));
+    // Optimistic UI update
+    const prevList = [...favourites];
+    setFavourites(favourites.filter((m) => (m.id || m._id) !== movieId));
 
     try {
       await movieService.removeFavourite(movieId);
     } catch (err) {
-      console.error('Remove favourite error:', err);
-      setError('Lỗi xóa phim yêu thích');
-      // Nếu lỗi thì hoàn tác lại danh sách cũ
-      setFavourites(previousFavourites);
+      console.error('Lỗi xóa:', err);
+      alert('Xóa thất bại, vui lòng thử lại.');
+      setFavourites(prevList); // Hoàn tác nếu lỗi
     }
   };
 
-  // --- PHẦN RENDER GIAO DIỆN ---
-
   return (
-    <div className="container mx-auto p-4 min-h-screen">
-      <h1 className="text-3xl font-bold mb-6 text-gray-800 dark:text-white border-b pb-2">
-        Danh sách phim yêu thích
+    <div className="container mx-auto px-4 py-10 min-h-screen">
+      <h1 className="text-3xl font-bold mb-8 text-gray-800 dark:text-white flex items-center gap-3">
+        <span className="text-red-500">♥</span> Danh sách yêu thích
+        <span className="text-sm font-normal text-gray-500 mt-1 ml-2">({favourites.length} phim)</span>
       </h1>
 
-      {/* 1. Trạng thái Đang tải */}
-      {loading && (
-        <div className="flex justify-center items-center py-20">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500"></div>
-        </div>
-      )}
+      {loading && <div className="text-center py-20">Đang tải...</div>}
+      
+      {error && <div className="p-4 bg-red-100 text-red-700 rounded mb-6">{error}</div>}
 
-      {/* 2. Trạng thái Lỗi */}
-      {error && (
-        <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative mb-4" role="alert">
-          <strong className="font-bold">Lỗi! </strong>
-          <span className="block sm:inline">{error}</span>
-        </div>
-      )}
-
-      {/* 3. Trạng thái Danh sách trống (chỉ hiện khi KHÔNG load và KHÔNG lỗi) */}
       {!loading && !error && favourites.length === 0 && (
-        <div className="text-center py-12 bg-gray-50 dark:bg-gray-800 rounded-lg">
-          <p className="text-gray-600 dark:text-gray-400 mb-4 text-lg">
-            Bạn chưa thêm phim nào vào danh sách yêu thích.
-          </p>
-          <Link 
-            to="/" 
-            className="inline-block px-6 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors"
-          >
-            Khám phá phim ngay
-          </Link>
+        <div className="text-center py-20 bg-gray-50 dark:bg-gray-800 rounded-lg">
+          <p className="text-gray-500 mb-4">Danh sách trống.</p>
+          <Link to="/" className="px-6 py-2 bg-blue-600 text-white rounded hover:bg-blue-700">Khám phá phim ngay</Link>
         </div>
       )}
 
-      {/* 4. Trạng thái Có dữ liệu */}
-      {!loading && favourites.length > 0 && (
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-          {favourites.map((movie) => (
-            <div 
-              key={movie.id} 
-              className="bg-white dark:bg-gray-800 rounded-lg overflow-hidden shadow-md hover:shadow-xl transition-shadow duration-300 flex flex-col"
-            >
-              {/* Ảnh Poster (có link chi tiết) */}
-              <Link to={`/movie/${movie.id}`} className="relative group">
-                <img 
-                  src={movie.poster_path ? `https://image.tmdb.org/t/p/w500${movie.poster_path}` : 'https://via.placeholder.com/500x750?text=No+Image'} 
-                  alt={movie.title} 
-                  className="w-full h-64 object-cover" 
-                />
-                <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-20 transition-all"></div>
+      <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-6">
+        {favourites.map((movie) => (
+          <div key={movie.id || movie._id} className="group relative bg-white dark:bg-gray-800 rounded-lg shadow overflow-hidden flex flex-col">
+            <Link to={`/movie/${movie.id || movie._id}`} className="relative aspect-[2/3] overflow-hidden">
+              <img 
+                src={getPosterUrl(movie)} 
+                alt={movie.title}
+                className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+                onError={(e) => {e.target.src = 'https://via.placeholder.com/500x750?text=No+Image'}}
+              />
+              {/* Rating badge */}
+              {(movie.rate || movie.vote_average) && (
+                  <div className="absolute top-2 right-2 bg-yellow-400 text-xs font-bold px-2 py-1 rounded shadow">
+                      ★ {movie.rate || movie.vote_average}
+                  </div>
+              )}
+            </Link>
+            
+            <div className="p-3 flex flex-col flex-grow">
+              <Link to={`/movie/${movie.id || movie._id}`}>
+                  <h3 className="font-bold text-gray-800 dark:text-white line-clamp-1 hover:text-blue-600 transition">
+                      {movie.title}
+                  </h3>
               </Link>
+              <p className="text-xs text-gray-500 mb-3">
+                  {movie.year || 'N/A'}
+              </p>
               
-              <div className="p-4 flex flex-col flex-grow">
-                <Link to={`/movie/${movie.id}`}>
-                    <h3 className="font-semibold text-lg text-gray-800 dark:text-white hover:text-blue-500 line-clamp-1" title={movie.title}>
-                    {movie.title}
-                    </h3>
-                </Link>
-                <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">
-                    {movie.release_date ? new Date(movie.release_date).getFullYear() : 'N/A'}
-                </p>
-                
-                {/* Nút xóa đẩy xuống đáy */}
-                <button
-                  onClick={() => handleRemove(movie.id)}
-                  className="mt-auto w-full px-3 py-2 bg-red-100 text-red-600 hover:bg-red-200 dark:bg-red-900/30 dark:text-red-400 dark:hover:bg-red-900/50 rounded transition-colors flex items-center justify-center gap-2"
-                >
-                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/></svg>
-                  Xóa khỏi list
-                </button>
-              </div>
+              <button
+                onClick={() => handleRemove(movie.id || movie._id)}
+                className="mt-auto w-full py-1.5 px-3 bg-red-100 text-red-600 text-xs font-bold rounded hover:bg-red-200 transition flex items-center justify-center gap-1"
+              >
+                Xóa
+              </button>
             </div>
-          ))}
-        </div>
-      )}
+          </div>
+        ))}
+      </div>
     </div>
   );
 }
