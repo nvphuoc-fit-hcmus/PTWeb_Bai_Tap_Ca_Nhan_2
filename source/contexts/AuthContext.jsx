@@ -9,50 +9,46 @@ export function AuthProvider({ children }) {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
 
   useEffect(() => {
-    // Kiểm tra user đã login chưa
-    const token = localStorage.getItem('authToken');
-    const savedUser = localStorage.getItem('user');
-    
-    if (token && savedUser) {
-      try {
-        setUser(JSON.parse(savedUser));
-        setIsAuthenticated(true);
-      } catch (error) {
-        console.error('Loi khi doc thong tin user:', error);
-        logout();
+    // Kiểm tra user đã login chưa khi load trang
+    const checkAuth = async () => {
+      const token = localStorage.getItem('accessToken');
+      if (token) {
+        try {
+          // Gọi API lấy thông tin user mới nhất để đảm bảo token còn hạn
+          const userData = await authService.getCurrentUser();
+          setUser(userData);
+          setIsAuthenticated(true);
+        } catch (error) {
+          console.error('Token hết hạn hoặc lỗi:', error);
+          logout();
+        }
       }
-    }
-    setLoading(false);
+      setLoading(false);
+    };
+    checkAuth();
   }, []);
 
-  const login = async (email, password) => {
+  const login = async (username, password) => {
     try {
-      const response = await authService.login(email, password);
+      const response = await authService.login(username, password);
+      // API trả về { token, user }
       const { token, user: userData } = response;
       
-      localStorage.setItem('authToken', token);
-      localStorage.setItem('user', JSON.stringify(userData));
+      localStorage.setItem('accessToken', token);
       setUser(userData);
       setIsAuthenticated(true);
       
-      return { success: true, data: response };
+      return { success: true };
     } catch (error) {
       console.error('Login error:', error);
       return { success: false, error: error.message || 'Lỗi đăng nhập' };
     }
   };
 
-  const register = async (name, email, password) => {
+  const register = async (username, email, password, phone, dob) => {
     try {
-      const response = await authService.register(name, email, password);
-      const { token, user: userData } = response;
-      
-      localStorage.setItem('authToken', token);
-      localStorage.setItem('user', JSON.stringify(userData));
-      setUser(userData);
-      setIsAuthenticated(true);
-      
-      return { success: true, data: response };
+      await authService.register(username, email, password, phone, dob);
+      return { success: true };
     } catch (error) {
       console.error('Register error:', error);
       return { success: false, error: error.message || 'Lỗi đăng ký' };
@@ -60,8 +56,8 @@ export function AuthProvider({ children }) {
   };
 
   const logout = () => {
-    localStorage.removeItem('authToken');
-    localStorage.removeItem('user');
+    authService.logout().catch(() => {}); // Gọi API logout (không quan trọng thành công hay thất bại)
+    localStorage.removeItem('accessToken');
     setUser(null);
     setIsAuthenticated(false);
   };

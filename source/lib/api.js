@@ -65,6 +65,8 @@ export const api = {
   post: (path, body) => request(path, { method: 'POST', body }),
   put: (path, body) => request(path, { method: 'PUT', body }),
   del: (path) => request(path, { method: 'DELETE' }),
+  patch: (path, body) => request(path, { method: 'PATCH', body }),
+  request: (path, options) => request(path, options),
 };
 
 export default api;

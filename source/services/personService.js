@@ -1,28 +1,39 @@
 import apiClient from '../lib/api';
 
 export const personService = {
-  // Lấy chi tiết người (diễn viên, đạo diễn, ...)
-  getPersonDetail: async (personId) => {
+  // 1. Search Persons: GET /api/persons
+  searchPersons: async (query, page = 1) => {
     try {
-      const response = await apiClient.get(`/api/people/${personId}`);
-      return response.data;
-    } catch (error) {
-      throw error.response?.data || { message: 'Lỗi lấy chi tiết người' };
-    }
-  },
-
-  // Lấy danh sách phim của một người
-  getPersonMovies: async (personId, page = 1) => {
-    try {
-      const response = await apiClient.get(`/api/people/${personId}/movies`, {
+      const response = await apiClient.get('/api/persons', {
         params: {
+          q: query,
           page,
           limit: 20,
         },
       });
-      return response.data;
+      return response;
     } catch (error) {
-      throw error.response?.data || { message: 'Lỗi lấy danh sách phim' };
+      throw error || { message: 'Lỗi tìm kiếm diễn viên' };
+    }
+  },
+
+  // 2. Person Detail: GET /api/persons/{id}
+  getPersonDetail: async (personId) => {
+    try {
+      const response = await apiClient.get(`/api/persons/${personId}`);
+      return response; 
+    } catch (error) {
+      throw error || { message: 'Lỗi lấy chi tiết người' };
+    }
+  },
+
+  // Helper cũ (nếu code cũ có dùng)
+  getPersonMovies: async (personId) => {
+    try {
+        const response = await apiClient.get(`/api/persons/${personId}`);
+        return { data: response.known_for || [] };
+    } catch (error) {
+        return { data: [] };
     }
   },
 };
