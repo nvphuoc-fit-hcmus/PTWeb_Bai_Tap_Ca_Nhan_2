@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useParams, Link } from 'react-router-dom';
+import { useParams, Link, useNavigate } from 'react-router-dom';
 import { Heart } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import movieService from '../services/movieService';
@@ -7,6 +7,7 @@ import Pagination from '../components/Pagination';
 
 export default function MovieDetailPage() {
   const { id } = useParams();
+  const navigate = useNavigate();
   const { isAuthenticated } = useAuth();
   const [movie, setMovie] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -137,6 +138,12 @@ export default function MovieDetailPage() {
   }, [id, reviewSort, reviewPage]);
 
   const handleFavourite = async () => {
+    // Nếu chưa đăng nhập, chuyển hướng đến trang đăng nhập
+    if (!isAuthenticated) {
+      navigate('/login', { replace: false, state: { from: `/movie/${id}` } });
+      return;
+    }
+
     try {
       if (isFavourite) {
         await movieService.removeFavourite(id);
@@ -146,7 +153,7 @@ export default function MovieDetailPage() {
       setIsFavourite(!isFavourite);
     } catch (err) {
       console.error('Favourite error:', err);
-      alert('Chức năng yêu thích cần đăng nhập hoặc API đang lỗi');
+      alert('Không thể cập nhật yêu thích. Vui lòng thử lại sau.');
     }
   };
 
@@ -203,19 +210,20 @@ export default function MovieDetailPage() {
             className="w-full rounded-lg shadow-2xl" 
             onError={(e) => {e.target.src = 'https://via.placeholder.com/500x750?text=Error'}}
           />
-          {isAuthenticated && (
-            <button
-              onClick={handleFavourite}
-              className={`w-full mt-4 px-4 py-3 rounded-lg flex items-center justify-center gap-2 font-bold transition-colors ${
-                isFavourite 
-                  ? 'bg-pink-100 text-pink-600 hover:bg-pink-200' 
-                  : 'bg-red-600 text-white hover:bg-red-700'
-              }`}
-            >
-              <Heart className="w-5 h-5" fill={isFavourite ? 'currentColor' : 'none'} />
-              {isFavourite ? 'Đã thích' : 'Thêm vào yêu thích'}
-            </button>
-          )}
+          <button
+            onClick={handleFavourite}
+            className={`w-full mt-4 px-4 py-3 rounded-lg flex items-center justify-center gap-2 font-bold transition-colors ${
+              isAuthenticated
+                ? (isFavourite 
+                    ? 'bg-pink-100 text-pink-600 hover:bg-pink-200'
+                    : 'bg-red-600 text-white hover:bg-red-700')
+                : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+            }`}
+            title={isAuthenticated ? (isFavourite ? 'Bỏ yêu thích' : 'Thêm vào yêu thích') : 'Đăng nhập để thêm yêu thích'}
+          >
+            <Heart className="w-5 h-5" fill={isFavourite && isAuthenticated ? 'currentColor' : 'none'} />
+            {isAuthenticated ? (isFavourite ? 'Đã thích' : 'Thêm vào yêu thích') : 'Thêm vào yêu thích'}
+          </button>
         </div>
 
         {/* Thông tin chi tiết */}
